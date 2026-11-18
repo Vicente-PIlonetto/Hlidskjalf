@@ -21,6 +21,7 @@
 
 - Use a monochrome, dark-first Windows Modern UI tile layout. Use grayscale tokens only; define colors in one token file and never hardcode colors elsewhere.
 - Keep surfaces fully flat: no shadows, gradients, decorative transparency, or rounded corners.
+- Express the Norse theme with Younger Futhark runes, runestone bands, and carved corners in grayscale tokens; see `docs/design-system.md`.
 - Keep UI copy concise, with no explanatory paragraphs. All UI text belongs in `pt-BR` and `en` localization files.
 - Animate only `transform` and `opacity`; honor `prefers-reduced-motion`. Keep keyboard focus visible and support keyboard navigation.
 - Keep UI rendering separate from the input daemon so rendering failures cannot affect input latency.

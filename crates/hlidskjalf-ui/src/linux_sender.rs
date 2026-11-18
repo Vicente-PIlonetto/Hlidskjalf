@@ -220,7 +220,7 @@ fn pair(id: String, updates: Sender<Update>) {
 pub(super) fn build(content: &gtk::Box, locale: &Value) {
     let card = gtk::Box::new(gtk::Orientation::Vertical, 8);
     card.style_context().add_class("card");
-    let heading = gtk::Label::new(Some(&label(locale, "senderTitle")));
+    let heading = crate::linux_native::rune_heading("ᚱ", &label(locale, "senderTitle"));
     heading.set_xalign(0.0);
     card.pack_start(&heading, false, false, 0);
 

@@ -11,7 +11,10 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 .app-shell { min-height: 100vh; }
 .topbar { height: 68px; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(20px, 5vw, 72px); border-bottom: 1px solid var(--gray-3); background: var(--gray-1); }
 .brand { display: inline-flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; letter-spacing: .16em; }
-.brand-mark { display: grid; width: 34px; height: 34px; place-items: center; color: var(--gray-0); background: var(--gray-10); font-family: "Segoe UI Historic", "Noto Sans Runic", var(--font-ui); font-size: 22px; letter-spacing: 0; }
+.brand-mark { display: block; width: 34px; height: 34px; flex: 0 0 auto; background: var(--gray-10); }
+.rune-stroke { fill: none; stroke: var(--gray-0); stroke-width: 3.2; stroke-linecap: square; transform-box: fill-box; transform-origin: center; }
+.brand-name { display: grid; gap: 2px; line-height: 1.1; }
+.brand-runes { color: var(--gray-6); font-family: var(--font-rune); font-size: 10px; font-weight: 400; letter-spacing: .32em; }
 .topbar-end { display: flex; align-items: center; gap: 18px; color: var(--gray-7); }
 .desktop-nav { display: flex; gap: 2px; }
 .nav-button { min-height: 36px; padding: 0 12px; border: 1px solid var(--gray-4); background: var(--gray-2); cursor: pointer; }
@@ -121,6 +124,23 @@ h1 { margin-bottom: 8px; font-size: clamp(28px, 3vw, 38px); line-height: 1.2; fo
 .tile-about .tile-copy { margin: 18px 0 14px; }
 .text-link { display: inline-flex; gap: 8px; color: var(--gray-9); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
 footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 20px; color: var(--gray-6); font-size: 11px; }
+/* Norse motifs: runestone bands, carved corners, and Younger Futhark runes, in grayscale only. */
+.rune-band { height: 26px; overflow: hidden; border-bottom: 1px solid var(--gray-3); color: var(--gray-5); background: var(--gray-0); font-family: var(--font-rune); font-size: 13px; letter-spacing: .35em; line-height: 26px; white-space: nowrap; user-select: none; }
+.rune-band-track { display: inline-flex; }
+.rune-band-track span { padding-right: .35em; }
+.eyebrow[data-rune]::before { display: inline-block; margin-right: 10px; color: var(--gray-9); content: attr(data-rune); font-family: var(--font-rune); font-size: 13px; font-weight: 400; letter-spacing: 0; transform: translateY(1px); }
+.tile, .input-settings-panel, .portal-editor { position: relative; }
+.tile { overflow: hidden; }
+.tile > :not(.tile-seal) { position: relative; }
+.tile::before, .tile::after, .input-settings-panel::before, .input-settings-panel::after, .portal-editor::before, .portal-editor::after { position: absolute; width: 14px; height: 14px; border: 0 solid var(--gray-6); content: ""; pointer-events: none; }
+.tile::before, .input-settings-panel::before, .portal-editor::before { top: 7px; left: 7px; border-width: 1px 0 0 1px; }
+.tile::after, .input-settings-panel::after, .portal-editor::after { right: 7px; bottom: 7px; border-width: 0 1px 1px 0; }
+.tile:hover::before, .input-settings-panel:hover::before, .portal-editor:hover::before { transform: translate(-3px, -3px); }
+.tile:hover::after, .input-settings-panel:hover::after, .portal-editor:hover::after { transform: translate(3px, 3px); }
+.tile-seal { position: absolute; right: -14px; bottom: -78px; color: var(--gray-2); font-family: var(--font-rune); font-size: 280px; line-height: 1; pointer-events: none; user-select: none; }
+.status-indicator { position: relative; }
+.status-indicator::after { position: absolute; inset: -1px; border: 1px solid var(--gray-10); content: ""; opacity: 0; }
+.portal-remote::before { display: block; color: var(--gray-9); content: "ᚱ"; font-family: var(--font-rune); font-size: 22px; font-weight: 400; }
 .toast { position: fixed; right: 24px; bottom: 24px; max-width: min(360px, calc(100vw - 48px)); padding: 12px 16px; border: 1px solid var(--gray-5); color: var(--gray-10); background: var(--gray-2); }
 
 /* Windows desktop */
@@ -220,6 +240,33 @@ footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 
   .status-card[data-state="remoteReconnecting"] .status-indicator { animation: pulse 1s ease-in-out infinite; }
   .nav-button::after, .switch-thumb, .button { transition: transform 160ms ease-out; }
   .button:active { transform: translateY(1px); }
+  /* The brand rune is carved stroke by stroke, then the runic name surfaces. */
+  @keyframes carve { from { opacity: 0; transform: scale(.15); } to { opacity: 1; transform: none; } }
+  @keyframes surface { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @keyframes rune-turn { from { opacity: 0; transform: translateY(1px) rotate(-90deg) scale(.5); } to { opacity: 1; transform: translateY(1px); } }
+  @keyframes seal { from { opacity: 0; transform: scale(.88) rotate(-8deg); } to { opacity: 1; transform: none; } }
+  @keyframes band-drift { to { transform: translateX(-50%); } }
+  @keyframes bifrost { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(3.4); } }
+  @keyframes kindle { 50% { opacity: .25; } }
+  .rune-stroke { animation: carve 380ms cubic-bezier(.2, .7, .2, 1) both; }
+  .rune-fall { animation-delay: 130ms; }
+  .rune-rise { animation-delay: 260ms; }
+  .brand-word { animation: surface 320ms 120ms ease-out both; }
+  .brand-runes { animation: surface 360ms 380ms ease-out both; }
+  .rune-band-track { animation: band-drift 120s linear infinite; }
+  .eyebrow[data-rune]::before { animation: rune-turn 360ms 140ms cubic-bezier(.2, .7, .2, 1) both; }
+  .tile-seal { animation: seal 480ms 90ms ease-out both; }
+  .tile::before, .tile::after, .input-settings-panel::before, .input-settings-panel::after, .portal-editor::before, .portal-editor::after { transition: transform 200ms ease-out; }
+  body[data-remote="remoteConnecting"] .rune-stroke,
+  body[data-remote="remoteReconnecting"] .rune-stroke { animation: kindle 1.2s ease-in-out infinite; }
+  body[data-remote="remoteConnecting"] .rune-fall,
+  body[data-remote="remoteReconnecting"] .rune-fall { animation-delay: .2s; }
+  body[data-remote="remoteConnecting"] .rune-rise,
+  body[data-remote="remoteReconnecting"] .rune-rise { animation-delay: .4s; }
+  .status-card[data-state="remoteConnected"] .status-indicator::after,
+  .status-card[data-state="portalActive"] .status-indicator::after { animation: bifrost 480ms ease-out 2; }
+  .portal-marker { animation: kindle 1.6s ease-in-out infinite; }
+  .toast:not([hidden]) { animation: surface 200ms ease-out both; }
 }
 
 @media (prefers-reduced-motion: reduce) {

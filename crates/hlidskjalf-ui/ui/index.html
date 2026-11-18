@@ -13,8 +13,12 @@
     <div class="app-shell">
       <header class="topbar">
         <a class="brand" href="#home" aria-label="Hliðskjálf">
-          <span class="brand-mark" aria-hidden="true">ᚼ</span>
-          <span>HLIÐSKJÁLF</span>
+          <svg class="brand-mark" viewBox="0 0 36 36" aria-hidden="true">
+            <path class="rune-stroke rune-stem" d="M18 7V29"/>
+            <path class="rune-stroke rune-fall" d="M10.5 12 25.5 24"/>
+            <path class="rune-stroke rune-rise" d="M25.5 12 10.5 24"/>
+          </svg>
+          <span class="brand-name"><span class="brand-word">HLIÐSKJÁLF</span><span class="brand-runes" aria-hidden="true">ᚼᛚᛁᚦᛋᚴᛁᛅᛚᚠ</span></span>
         </a>
         <div class="topbar-end">
           <nav id="desktop-nav" class="desktop-nav" hidden aria-label="Hliðskjálf">
@@ -29,13 +33,15 @@
           </select>
         </div>
       </header>
+      <div class="rune-band" aria-hidden="true"><div class="rune-band-track"><span>ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ </span><span>ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ </span></div></div>
 
       <main id="home" class="main-layout">
         <div class="content">
           <section class="tile-grid" aria-label="Painel" data-i18n-aria-label="dashboard">
             <article class="tile tile-connection">
+              <span class="tile-seal" aria-hidden="true">ᚼ</span>
               <div class="tile-head">
-                <div><p class="eyebrow" data-i18n="connectionEyebrow">PAREAMENTO</p><h2 data-i18n="connectionTitle">Conectar ao Linux</h2></div>
+                <div><p class="eyebrow" data-rune="ᚱ" data-i18n="connectionEyebrow">PAREAMENTO</p><h2 data-i18n="connectionTitle">Conectar a outro computador</h2></div>
                 <div class="status-card">
                   <span class="status-indicator" aria-hidden="true"></span>
                   <div><span class="status-title" data-i18n="daemonStatus">Estado</span><strong data-i18n="notConnected">Desconectado</strong></div>
@@ -55,7 +61,7 @@
 
             <article class="tile tile-primary" id="devices">
               <div class="tile-head">
-                <div><p class="eyebrow" data-i18n="devicesEyebrow">REDE</p><h2 data-i18n="devicesTitle">Dispositivos</h2></div>
+                <div><p class="eyebrow" data-rune="ᛘ" data-i18n="devicesEyebrow">REDE</p><h2 data-i18n="devicesTitle">Dispositivos</h2></div>
                 <span class="tile-icon" aria-hidden="true">▦</span>
               </div>
               <div class="mode-row">
@@ -95,7 +101,7 @@
 
             <article class="tile tile-small" id="settings">
               <div class="tile-head">
-                <div><p class="eyebrow" data-i18n="preferencesEyebrow">PREFERÊNCIAS</p><h2 data-i18n="preferencesTitle">Configurações</h2></div>
+                <div><p class="eyebrow" data-rune="ᛏ" data-i18n="preferencesEyebrow">PREFERÊNCIAS</p><h2 data-i18n="preferencesTitle">Configurações</h2></div>
                 <span class="tile-icon" aria-hidden="true">⚙</span>
               </div>
               <div class="setting-row"><span data-i18n="startupLabel">Iniciar com o sistema</span><span class="setting-value" data-i18n="off">Desativado</span></div>
@@ -105,17 +111,17 @@
 
             <article class="tile tile-small tile-about">
               <div class="tile-head">
-                <div><p class="eyebrow" data-i18n="aboutEyebrow">HLIÐSKJÁLF</p><h2 data-i18n="aboutTitle">Sobre</h2></div>
+                <div><p class="eyebrow" data-rune="ᚬ" data-i18n="aboutEyebrow">HLIÐSKJÁLF</p><h2 data-i18n="aboutTitle">Sobre</h2></div>
                 <span class="tile-icon" aria-hidden="true">ⓘ</span>
               </div>
-              <p class="tile-copy" data-i18n="aboutText">Controle local, rede privada, código aberto.</p>
+              <p class="tile-copy" data-i18n="aboutText">O trono de Odin, de onde se veem todos os mundos.</p>
               <a class="text-link" href="https://github.com/Vicente-PIlonetto/Hlidskjalf" data-i18n="projectLink">Ver projeto <span aria-hidden="true">↗</span></a>
             </article>
           </section>
           <section id="portal-page" class="portal-page" hidden aria-labelledby="portal-title">
-            <p class="eyebrow" data-i18n="portalEyebrow">POSIÇÃO DA TELA</p>
-            <h1 id="portal-title" data-i18n="portalTitle">Portal para o Linux</h1>
-            <p class="lead" data-i18n="portalIntro">Arraste o cursor pela borda escolhida para entrar no Linux.</p>
+            <p class="eyebrow" data-rune="ᚱ" data-i18n="portalEyebrow">POSIÇÃO DA TELA</p>
+            <h1 id="portal-title" data-i18n="portalTitle">Portal para o outro computador</h1>
+            <p class="lead" data-i18n="portalIntro">Arraste o cursor pela borda escolhida para entrar no outro computador.</p>
             <div class="portal-editor">
               <div class="portal-fields">
                 <label for="portal-remote-size" data-i18n="portalRemoteSize">Resolução do outro computador</label>
@@ -143,7 +149,7 @@
             <p class="field-help" data-i18n="portalEscape">O atalho configurado devolve o controle local. A desconexão também libera o teclado e o mouse.</p>
           </section>
           <section id="input-settings-page" class="portal-page" hidden aria-labelledby="input-settings-title">
-            <p class="eyebrow" data-i18n="inputSettingsEyebrow">CONTROLE</p>
+            <p class="eyebrow" data-rune="ᛏ" data-i18n="inputSettingsEyebrow">CONTROLE</p>
             <h1 id="input-settings-title" data-i18n="inputSettingsTitle">Configurações de entrada</h1>
             <p class="lead" data-i18n="inputSettingsIntro">Ajuste o controle do Linux pelo Windows.</p>
             <div id="linux-pairing" class="input-settings-panel" hidden>

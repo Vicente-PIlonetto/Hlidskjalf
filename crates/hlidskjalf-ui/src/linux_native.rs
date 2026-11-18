@@ -11,6 +11,21 @@ pub(crate) fn label(locale: &serde_json::Value, key: &str) -> String {
         .to_owned()
 }
 
+/// "Óðinn sér alla heima" (Odin sees every world) in Younger Futhark, like a runestone band.
+const RUNE_BAND: &str =
+    "ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬ ᚢᚦᛁᚾ᛫ᛋᛁᚱ᛫ᛅᛚᛅ᛫ᚼᛅᛁᛘᛅ᛬";
+
+/// A card heading led by a Younger Futhark rune.
+pub(crate) fn rune_heading(rune: &str, text: &str) -> gtk::Label {
+    let heading = gtk::Label::new(None);
+    heading.set_markup(&format!(
+        "<span font_family=\"Noto Sans Runic\">{rune}</span>   {}",
+        gtk::glib::markup_escape_text(text)
+    ));
+    heading.style_context().add_class("card-heading");
+    heading
+}
+
 /// Moves data and settings from the project's former name, Vortal, when they exist.
 fn migrate_legacy_dirs() {
     let home = std::env::var_os("HOME").map(PathBuf::from);
@@ -249,10 +264,19 @@ fn build_window(application: &gtk::Application, locale: serde_json::Value) {
     title.style_context().add_class("app-title");
     title.set_xalign(0.0);
     content.pack_start(&title, false, false, 0);
+    let runes = gtk::Label::new(Some("ᚼᛚᛁᚦᛋᚴᛁᛅᛚᚠ"));
+    runes.style_context().add_class("app-runes");
+    runes.set_xalign(0.0);
+    content.pack_start(&runes, false, false, 0);
+    let band = gtk::Label::new(Some(RUNE_BAND));
+    band.style_context().add_class("rune-band");
+    band.set_xalign(0.0);
+    band.set_ellipsize(gtk::pango::EllipsizeMode::End);
+    content.pack_start(&band, false, false, 0);
 
     let id_card = gtk::Box::new(gtk::Orientation::Vertical, 8);
     id_card.style_context().add_class("card");
-    let id_heading = gtk::Label::new(Some(&label(&locale, "myId")));
+    let id_heading = rune_heading("ᛘ", &label(&locale, "myId"));
     id_heading.set_xalign(0.0);
     let id_label = gtk::Label::new(Some("—"));
     id_label.style_context().add_class("device-id");
@@ -266,7 +290,7 @@ fn build_window(application: &gtk::Application, locale: serde_json::Value) {
 
     let request_box = gtk::Box::new(gtk::Orientation::Vertical, 8);
     request_box.style_context().add_class("card");
-    let request_heading = gtk::Label::new(Some(&label(&locale, "pairingRequest")));
+    let request_heading = rune_heading("ᚾ", &label(&locale, "pairingRequest"));
     request_heading.set_xalign(0.0);
     let peer_label = gtk::Label::new(None);
     peer_label.set_xalign(0.0);
@@ -288,7 +312,7 @@ fn build_window(application: &gtk::Application, locale: serde_json::Value) {
 
     let settings = gtk::Box::new(gtk::Orientation::Vertical, 0);
     settings.style_context().add_class("card");
-    let settings_heading = gtk::Label::new(Some(&label(&locale, "preferencesTitle")));
+    let settings_heading = rune_heading("ᛏ", &label(&locale, "preferencesTitle"));
     settings_heading.set_xalign(0.0);
     settings.pack_start(&settings_heading, false, false, 0);
     let status = gtk::Label::new(None);

@@ -1,6 +1,10 @@
 window, box.app-content { background: @gray_0; color: @gray_10; }
 box.app-content { padding: 28px; }
-label.app-title { font-size: 28px; font-weight: 600; margin-bottom: 18px; }
+label.app-title { font-size: 28px; font-weight: 600; }
+label.app-runes { color: @gray_7; font-family: "Noto Sans Runic", "Segoe UI Historic", serif; font-size: 13px; letter-spacing: 6px; margin-bottom: 14px; animation: surface 420ms ease-out; }
+label.rune-band { color: @gray_3; font-family: "Noto Sans Runic", "Segoe UI Historic", serif; font-size: 12px; letter-spacing: 5px; padding: 5px 0; margin-bottom: 18px; border-top: 1px solid @gray_3; border-bottom: 1px solid @gray_3; animation: surface 600ms ease-out; }
+label.card-heading { font-weight: 600; margin-bottom: 4px; }
+@keyframes surface { from { opacity: 0; } to { opacity: 1; } }
 box.card { background: @gray_1; border: 1px solid @gray_3; padding: 18px; margin-bottom: 12px; }
 label.device-id { font-size: 32px; font-weight: 700; letter-spacing: 2px; }
 label.status { color: @gray_7; margin-top: 10px; }

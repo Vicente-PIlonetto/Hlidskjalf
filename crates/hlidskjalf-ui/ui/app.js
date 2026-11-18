@@ -176,6 +176,7 @@ function renderRemoteStatus() {
   status.hidden = remoteState === "remoteIdle";
   if (window.hlidskjalfDesktop) {
     document.querySelector(".status-card").dataset.state = remoteState;
+    document.body.dataset.remote = remoteState;
     document.querySelector(".status-card strong").textContent = ["remoteConnected", "portalActive"].includes(remoteState)
       ? locale.remoteBadgeConnected
       : ["remoteConnecting", "remoteReconnecting"].includes(remoteState)
