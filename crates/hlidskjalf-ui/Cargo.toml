@@ -18,7 +18,7 @@ hlidskjalf-input-linux = { path = "../hlidskjalf-input-linux" }
 hlidskjalf-net = { path = "../hlidskjalf-net" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-base64 = "0.22"
+base64 = "0.23"
 png = "0.18"
 serde_json.workspace = true
 sha2 = "0.10"
