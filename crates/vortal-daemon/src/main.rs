@@ -1,17 +1,22 @@
 use std::{net::SocketAddr, path::PathBuf};
 
 use async_trait::async_trait;
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", windows))]
 use vortal_input::InputInjector;
 use vortal_input::{InputError, PeerDirectory};
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", windows))]
 use vortal_proto::Message;
 #[cfg(target_os = "linux")]
 mod file_clipboard;
 use vortal_vylink::{VyLinkCredentials, VyLinkDirectory};
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", windows))]
 mod pairing;
+
+#[cfg(target_os = "linux")]
+type PlatformInjector = vortal_input_linux::WaylandInjector;
+#[cfg(windows)]
+type PlatformInjector = vortal_input_windows::WindowsInjector;
 
 const KEYRING_SERVICE: &str = "com.vortal";
 const KEYRING_ACCOUNT: &str = "vylink-bearer-token";
@@ -43,7 +48,7 @@ async fn main() -> anyhow::Result<()> {
     let mut vylink_server = None;
     let mut vylink_network = None;
     let mut input_enabled = false;
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", windows))]
     let mut clipboard_supported = false;
     #[cfg(target_os = "linux")]
     let mut audio_supported = false;
@@ -52,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
             input_enabled = true;
             continue;
         }
-        #[cfg(target_os = "linux")]
+        #[cfg(any(target_os = "linux", windows))]
         if option == "--clipboard" {
             clipboard_supported = true;
             continue;
@@ -103,7 +108,19 @@ async fn main() -> anyhow::Result<()> {
             )
             .await;
         }
-        #[cfg(not(target_os = "linux"))]
+        #[cfg(windows)]
+        {
+            return run_input_server(
+                bind,
+                identity,
+                peer_certificate,
+                directory,
+                clipboard_supported,
+                false,
+            )
+            .await;
+        }
+        #[cfg(not(any(target_os = "linux", windows)))]
         anyhow::bail!("input injection is not available on this platform");
     }
     match directory {
@@ -114,7 +131,7 @@ async fn main() -> anyhow::Result<()> {
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", windows))]
 async fn run_input_server(
     bind: SocketAddr,
     identity: &std::path::Path,
@@ -123,15 +140,18 @@ async fn run_input_server(
     clipboard_supported: bool,
     audio_supported: bool,
 ) -> anyhow::Result<()> {
-    let mut injector = vortal_input_linux::WaylandInjector::new()?;
+    let mut injector = PlatformInjector::new()?;
     let (sender, mut receiver) = tokio::sync::mpsc::channel(256);
     let (returns, _) = tokio::sync::broadcast::channel(4);
     let return_signal = returns.clone();
     let (clipboard_out, _) = tokio::sync::broadcast::channel(256);
     let (audio_out, _) = tokio::sync::broadcast::channel(16);
+    #[cfg(target_os = "linux")]
     if audio_supported {
         tokio::spawn(capture_audio(audio_out.clone()));
     }
+    #[cfg(windows)]
+    let _ = audio_supported;
     let clipboard_sender = clipboard_out.clone();
     let last_clipboard = std::sync::Arc::new(tokio::sync::Mutex::new(None::<String>));
     let last_for_events = std::sync::Arc::clone(&last_clipboard);
@@ -140,7 +160,10 @@ async fn run_input_server(
     if clipboard_supported {
         tokio::spawn(poll_clipboard(clipboard_sender, last_clipboard, last_files));
     }
+    #[cfg(target_os = "linux")]
     let mut incoming_files = file_clipboard::IncomingFiles::default();
+    #[cfg(windows)]
+    let _ = &files_for_events;
     let (reload_tx, mut reload_rx) = tokio::sync::mpsc::channel(2);
     let server = async {
         loop {
@@ -167,11 +190,12 @@ async fn run_input_server(
                 if let Message::ClipboardText(text) = event {
                     if clipboard_supported && clipboard_enabled() && text.len() <= 16 * 1024 {
                         *last_for_events.lock().await = Some(text.clone());
-                        tokio::spawn(async move { let _ = write_wayland_clipboard(text).await; });
+                        tokio::spawn(async move { let _ = write_clipboard_text(text).await; });
                     }
                     continue;
                 }
                 if matches!(event, Message::ClipboardOffer(_) | Message::ClipboardData(_)) {
+                    #[cfg(target_os = "linux")]
                     if clipboard_supported && clipboard_enabled() {
                         if let Some((id, data)) = incoming_files.accept(event) {
                             let last = files_for_events.clone();
@@ -184,11 +208,20 @@ async fn run_input_server(
                     }
                     continue;
                 }
+                let presence = match &event {
+                    Message::EnterScreen(_) => Some(true),
+                    Message::LeaveScreen => Some(false),
+                    _ => None,
+                };
                 if let Err(error) = injector.inject(event).await {
                     tracing::error!(%error, "input injection failed; restoring local control");
                     let _ = injector.inject(Message::LeaveScreen).await;
+                    report_presence(false);
                     let _ = return_signal.send(());
                     continue;
+                }
+                if let Some(entered) = presence {
+                    report_presence(entered);
                 }
                 if injector.take_return_requested() {
                     let _ = return_signal.send(());
@@ -199,18 +232,31 @@ async fn run_input_server(
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", windows))]
 async fn poll_clipboard(
     sender: tokio::sync::broadcast::Sender<Message>,
     last_clipboard: std::sync::Arc<tokio::sync::Mutex<Option<String>>>,
     last_files: std::sync::Arc<tokio::sync::Mutex<Option<String>>>,
 ) {
     let mut poll = tokio::time::interval(std::time::Duration::from_millis(500));
+    #[cfg(windows)]
+    let _ = &last_files;
+    #[cfg(windows)]
+    let mut sequence = 0;
     loop {
         poll.tick().await;
         if !clipboard_enabled() || sender.receiver_count() == 0 {
             continue;
         }
+        #[cfg(windows)]
+        {
+            let current = vortal_input_windows::WindowsClipboard::sequence();
+            if current == sequence {
+                continue;
+            }
+            sequence = current;
+        }
+        #[cfg(target_os = "linux")]
         if let Ok(Some((signature, paths))) = file_clipboard::read_selection().await {
             let mut last = last_files.lock().await;
             if last.as_deref() != Some(signature.as_str()) {
@@ -224,7 +270,7 @@ async fn poll_clipboard(
             }
             continue;
         }
-        if let Ok(Some(text)) = read_wayland_clipboard().await {
+        if let Ok(Some(text)) = read_clipboard_text().await {
             let mut last = last_clipboard.lock().await;
             if last.as_deref() != Some(text.as_str()) {
                 *last = Some(text.clone());
@@ -234,13 +280,26 @@ async fn poll_clipboard(
     }
 }
 
-#[cfg(target_os = "linux")]
+/// Receiver settings written by the desktop app.
+#[cfg(any(target_os = "linux", windows))]
+fn settings_dir() -> Option<PathBuf> {
+    #[cfg(windows)]
+    {
+        std::env::var_os("APPDATA").map(|base| PathBuf::from(base).join("Vortal").join("receiver"))
+    }
+    #[cfg(not(windows))]
+    {
+        std::env::var_os("XDG_CONFIG_HOME")
+            .map(PathBuf::from)
+            .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))
+            .map(|base| base.join("vortal"))
+    }
+}
+
+#[cfg(any(target_os = "linux", windows))]
 fn clipboard_enabled() -> bool {
-    let base = std::env::var_os("XDG_CONFIG_HOME")
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")));
-    base.is_some_and(|base| {
-        std::fs::read(base.join("vortal").join("clipboard-enabled"))
+    settings_dir().is_some_and(|base| {
+        std::fs::read(base.join("clipboard-enabled"))
             .map(|value| value == b"1")
             .unwrap_or(true)
     })
@@ -248,15 +307,7 @@ fn clipboard_enabled() -> bool {
 
 #[cfg(target_os = "linux")]
 fn setting_enabled(name: &str) -> bool {
-    let base = std::env::var_os("XDG_CONFIG_HOME")
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")));
-    base.is_some_and(|base| {
-        std::fs::read(base.join("vortal").join(name))
-            .ok()
-            .as_deref()
-            == Some(b"1")
-    })
+    settings_dir().is_some_and(|base| std::fs::read(base.join(name)).ok().as_deref() == Some(b"1"))
 }
 
 #[cfg(target_os = "linux")]
@@ -311,7 +362,7 @@ async fn capture_audio(sender: tokio::sync::broadcast::Sender<Vec<u8>>) {
 }
 
 #[cfg(target_os = "linux")]
-async fn read_wayland_clipboard() -> anyhow::Result<Option<String>> {
+async fn read_clipboard_text() -> anyhow::Result<Option<String>> {
     let mut command = tokio::process::Command::new("wl-paste");
     command
         .args(["--no-newline", "--type", "text/plain;charset=utf-8"])
@@ -325,7 +376,7 @@ async fn read_wayland_clipboard() -> anyhow::Result<Option<String>> {
 }
 
 #[cfg(target_os = "linux")]
-async fn write_wayland_clipboard(text: String) -> anyhow::Result<()> {
+async fn write_clipboard_text(text: String) -> anyhow::Result<()> {
     use tokio::io::AsyncWriteExt;
     let mut child = tokio::process::Command::new("wl-copy")
         .args(["--type", "text/plain;charset=utf-8"])
@@ -337,4 +388,32 @@ async fn write_wayland_clipboard(text: String) -> anyhow::Result<()> {
     }
     tokio::time::timeout(std::time::Duration::from_secs(2), child.wait()).await??;
     Ok(())
+}
+
+#[cfg(windows)]
+async fn read_clipboard_text() -> anyhow::Result<Option<String>> {
+    use vortal_input::ClipboardProvider;
+    Ok(vortal_input_windows::WindowsClipboard.read_text().await?)
+}
+
+#[cfg(windows)]
+async fn write_clipboard_text(text: String) -> anyhow::Result<()> {
+    use vortal_input::ClipboardProvider;
+    Ok(vortal_input_windows::WindowsClipboard
+        .write_text(text)
+        .await?)
+}
+
+/// Tells the desktop app whether the remote cursor is on this computer.
+#[cfg(any(target_os = "linux", windows))]
+fn report_presence(entered: bool) {
+    use std::io::Write;
+    let line = if entered {
+        "VORTAL_RECEIVER_ENTER"
+    } else {
+        "VORTAL_RECEIVER_LEAVE"
+    };
+    let mut stdout = std::io::stdout().lock();
+    let _ = writeln!(stdout, "{line}");
+    let _ = stdout.flush();
 }

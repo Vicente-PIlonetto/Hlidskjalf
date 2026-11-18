@@ -3214,6 +3214,7 @@ dependencies = [
  "url",
  "vortal-input",
  "vortal-input-linux",
+ "vortal-input-windows",
  "vortal-net",
  "vortal-proto",
  "vortal-vylink",

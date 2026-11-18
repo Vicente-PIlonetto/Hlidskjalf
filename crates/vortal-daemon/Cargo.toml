@@ -30,6 +30,7 @@ vortal-input-linux = { path = "../vortal-input-linux" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 keyring = { version = "3.6", default-features = false, features = ["windows-native"] }
+vortal-input-windows = { path = "../vortal-input-windows" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 keyring = { version = "3.6", default-features = false, features = ["apple-native"] }
