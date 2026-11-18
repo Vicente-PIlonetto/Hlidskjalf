@@ -1235,9 +1235,7 @@ fn tailscale_peers() -> anyhow::Result<Vec<Ipv4Addr>> {
         };
         let mut addresses = Vec::new();
         for peer in peers.values() {
-            if peer.get("Online").and_then(Value::as_bool) != Some(true)
-                || peer.get("OS").and_then(Value::as_str) != Some("linux")
-            {
+            if peer.get("Online").and_then(Value::as_bool) != Some(true) {
                 continue;
             }
             if let Some(ips) = peer.get("TailscaleIPs").and_then(Value::as_array) {
