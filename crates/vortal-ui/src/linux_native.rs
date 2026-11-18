@@ -3,7 +3,7 @@ use std::{cell::RefCell, path::PathBuf, process::Command, rc::Rc};
 use gtk::prelude::*;
 use sha2::{Digest, Sha256};
 
-fn label(locale: &serde_json::Value, key: &str) -> String {
+pub(crate) fn label(locale: &serde_json::Value, key: &str) -> String {
     locale
         .get(key)
         .and_then(serde_json::Value::as_str)
@@ -11,21 +11,21 @@ fn label(locale: &serde_json::Value, key: &str) -> String {
         .to_owned()
 }
 
-fn state_dir() -> Option<PathBuf> {
+pub(crate) fn state_dir() -> Option<PathBuf> {
     std::env::var_os("XDG_DATA_HOME")
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share")))
         .map(|base| base.join("vortal"))
 }
 
-fn setting_path(name: &str) -> Option<PathBuf> {
+pub(crate) fn setting_path(name: &str) -> Option<PathBuf> {
     std::env::var_os("XDG_CONFIG_HOME")
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))
         .map(|base| base.join("vortal").join(name))
 }
 
-fn setting_enabled(name: &str) -> bool {
+pub(crate) fn setting_enabled(name: &str) -> bool {
     setting_path(name)
         .and_then(|path| std::fs::read(path).ok())
         .is_some_and(|value| value == b"1")
@@ -308,8 +308,12 @@ fn build_window(application: &gtk::Application, locale: serde_json::Value) {
     );
     settings.pack_start(&status, false, false, 0);
     content.pack_start(&settings, false, false, 0);
+    crate::linux_sender::build(&content, &locale);
 
-    window.add(&content);
+    let scroller = gtk::ScrolledWindow::new(gtk::Adjustment::NONE, gtk::Adjustment::NONE);
+    scroller.set_policy(gtk::PolicyType::Never, gtk::PolicyType::Automatic);
+    scroller.add(&content);
+    window.add(&scroller);
     window.show_all();
 
     let nonce = Rc::new(RefCell::new(None::<String>));

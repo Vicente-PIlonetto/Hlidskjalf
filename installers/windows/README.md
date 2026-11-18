@@ -55,6 +55,18 @@ netsh advfirewall firewall add rule name="Vortal receptor" dir=in action=allow p
 
 O receptor Windows aceita mouse, teclado (incluindo acentos por teclas mortas) e texto da área de transferência. Áudio, imagens e arquivos ainda não são enviados para um receptor Windows. Janelas executadas como administrador não recebem entrada de um app sem elevação, e a tela de bloqueio ou o UAC devolvem o controle ao computador de origem.
 
+## Controlar o Windows pelo Linux
+
+O Linux também pode controlar um Windows com o receptor ativo.
+
+1. No Windows, ative **Permitir controle deste PC** em **Configurações** e anote o **ID deste PC**.
+2. No app Linux, em **Controlar outro computador**, digite o ID e clique em **Parear**. Confirme no Windows com **Permitir**.
+3. Escolha o monitor e a borda do Linux que levam ao Windows e ative **Conectar pelo portal**.
+
+Para voltar, cruze a borda de entrada no Windows ou pressione **Ctrl+Shift+Q**. As teclas são enviadas pela posição física, então o layout configurado no Windows define os caracteres, incluindo ABNT2, AltGr e acentos. Texto copiado é compartilhado quando a área de transferência está ativa.
+
+A captura lê o mouse e o teclado diretamente e exige que o usuário esteja no grupo `input` (`sudo usermod -aG input $USER`, depois saia e entre na sessão). Ela só toma os dispositivos enquanto o cursor está no Windows; uma falha de rede ou o encerramento do processo devolvem o controle ao Linux na hora. A detecção da borda usa o IPC do Hyprland. Touchpads funcionam para mover e clicar; gestos e toque para clicar ainda não são enviados.
+
 ## Gerar o app Windows
 
 No Windows x64, instale Rust 1.85+, Visual Studio C++ Build Tools e NSIS; depois execute `scripts\build-windows.bat`. O instalador Rust fica em `dist\windows-native\Vortal-Setup-Rust-x64.exe`. A janela usa WebView2 e requer o WebView2 Runtime. O Vortal inicia na bandeja ao entrar no Windows; essa opção pode ser desativada em Configurações. A instalação fica em `VortalRust` para preservar a versão Electron anterior.

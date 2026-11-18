@@ -14,6 +14,7 @@ anyhow.workspace = true
 gtk = "0.18"
 serde_json.workspace = true
 sha2 = "0.10"
+vortal-input-linux = { path = "../vortal-input-linux" }
 vortal-net = { path = "../vortal-net" }
 
 [target.'cfg(target_os = "windows")'.dependencies]

@@ -1,31 +1,22 @@
-//! Linux/Wayland input injection, isolated from the platform-neutral core.
+//! Linux/Wayland input: injection when Linux is controlled, evdev capture when it controls.
+
+pub mod keymap;
+
+#[cfg(target_os = "linux")]
+pub mod capture;
+#[cfg(target_os = "linux")]
+pub mod hyprland;
 
 #[cfg(target_os = "linux")]
 mod wayland {
-    use std::{
-        collections::BTreeSet,
-        io::{Read, Write},
-        net::Shutdown,
-        os::unix::net::UnixStream,
-        path::PathBuf,
-        sync::Mutex,
-        time::Duration,
-    };
+    use std::{collections::BTreeSet, sync::Mutex};
+
+    use crate::hyprland::{focused_monitor, Monitor};
 
     use async_trait::async_trait;
     use enigo::{Axis, Button, Coordinate, Direction, Enigo, Key, Keyboard, Mouse, Settings};
     use vortal_input::{keycode, InputError, InputInjector};
     use vortal_proto::{Edge, EnterScreen, Message};
-
-    #[derive(serde::Deserialize)]
-    struct Monitor {
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
-        focused: bool,
-        disabled: bool,
-    }
 
     pub struct WaylandInjector {
         device: Mutex<Option<Enigo>>,
@@ -232,54 +223,6 @@ mod wayland {
             }
             Ok(())
         }
-    }
-
-    fn focused_monitor() -> Result<Monitor, InputError> {
-        let monitors: Vec<Monitor> = hyprland_query("j/monitors")?;
-        monitors
-            .into_iter()
-            .find(|monitor| monitor.focused && !monitor.disabled)
-            .ok_or_else(|| InputError::Backend("Hyprland focused monitor unavailable".into()))
-    }
-
-    fn hyprland_query<T: serde::de::DeserializeOwned>(request: &str) -> Result<T, InputError> {
-        let runtime = std::env::var_os("XDG_RUNTIME_DIR")
-            .ok_or_else(|| InputError::Backend("XDG_RUNTIME_DIR missing".into()))?;
-        let signature = std::env::var_os("HYPRLAND_INSTANCE_SIGNATURE")
-            .ok_or_else(|| InputError::Backend("Hyprland session missing".into()))?;
-        let path = PathBuf::from(runtime)
-            .join("hypr")
-            .join(signature)
-            .join(".socket.sock");
-        let mut socket =
-            UnixStream::connect(path).map_err(|error| InputError::Backend(error.to_string()))?;
-        socket
-            .set_read_timeout(Some(Duration::from_millis(50)))
-            .map_err(|error| InputError::Backend(error.to_string()))?;
-        socket
-            .write_all(request.as_bytes())
-            .map_err(|error| InputError::Backend(error.to_string()))?;
-        socket
-            .shutdown(Shutdown::Write)
-            .map_err(|error| InputError::Backend(error.to_string()))?;
-        let mut response = Vec::new();
-        let mut chunk = [0_u8; 4096];
-        loop {
-            match socket.read(&mut chunk) {
-                Ok(0) => break,
-                Ok(size) => {
-                    response.extend_from_slice(&chunk[..size]);
-                    if let Ok(value) = serde_json::from_slice(&response) {
-                        return Ok(value);
-                    }
-                    if response.len() > 65_536 {
-                        return Err(InputError::Backend("Hyprland response too large".into()));
-                    }
-                }
-                Err(error) => return Err(InputError::Backend(error.to_string())),
-            }
-        }
-        serde_json::from_slice(&response).map_err(|error| InputError::Backend(error.to_string()))
     }
 
     fn direction(pressed: bool) -> Direction {

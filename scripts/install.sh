@@ -34,5 +34,9 @@ if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/d
   fi
 fi
 
+if ! id -nG | tr ' ' '\n' | grep -qx input; then
+  printf '\nPara controlar outro computador a partir deste Linux, adicione seu usuário ao grupo input:\n  sudo usermod -aG input %s\nDepois saia e entre novamente na sessão.\n' "${USER}"
+fi
+
 printf '\nVortal instalado. Abra pelo menu de aplicativos ou execute:\n  %s\n' \
   "${bin_dir}/vortal-desktop"

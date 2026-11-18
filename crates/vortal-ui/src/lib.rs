@@ -31,6 +31,8 @@ const UI_ICON: &[u8] = include_bytes!("../ui/assets/vortal.png");
 
 #[cfg(target_os = "linux")]
 mod linux_native;
+#[cfg(target_os = "linux")]
+mod linux_sender;
 
 #[cfg(target_os = "linux")]
 pub use linux_native::run_desktop;

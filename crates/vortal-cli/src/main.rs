@@ -4,6 +4,10 @@ use async_trait::async_trait;
 use vortal_input::InputError;
 use vortal_proto::{ClipboardData, ClipboardOffer, Edge, EnterScreen, Message};
 
+mod pair;
+#[cfg(target_os = "linux")]
+mod portal;
+
 #[derive(serde::Deserialize)]
 #[serde(
     tag = "type",
@@ -307,7 +311,88 @@ async fn main() -> anyhow::Result<()> {
                 vortal_net::connect(peer, identity, peer_certificate).await
             }
         }
-        _ => anyhow::bail!("usage: vortal <identity|serve|connect> [options]"),
+        Some("pair") => {
+            let id = args.next().ok_or_else(|| {
+                anyhow::anyhow!("usage: vortal pair ID --identity DIRECTORY --peer-cert FILE")
+            })?;
+            let mut identity = None;
+            let mut peer_certificate = None;
+            while let Some(option) = args.next() {
+                match option.as_str() {
+                    "--identity" => {
+                        identity = Some(PathBuf::from(next_value(&mut args, "--identity")?))
+                    }
+                    "--peer-cert" => {
+                        peer_certificate =
+                            Some(PathBuf::from(next_value(&mut args, "--peer-cert")?))
+                    }
+                    _ => anyhow::bail!("unknown option: {option}"),
+                }
+            }
+            let identity =
+                identity.ok_or_else(|| anyhow::anyhow!("missing --identity DIRECTORY"))?;
+            let peer_certificate =
+                peer_certificate.ok_or_else(|| anyhow::anyhow!("missing --peer-cert FILE"))?;
+            let address =
+                tokio::task::spawn_blocking(move || pair::pair(&id, &identity, &peer_certificate))
+                    .await??;
+            println!("VORTAL_PAIRED {address}");
+            Ok(())
+        }
+        #[cfg(target_os = "linux")]
+        Some("portal") => {
+            let peer: SocketAddr = args
+                .next()
+                .ok_or_else(|| {
+                    anyhow::anyhow!(
+                        "usage: vortal portal IP:PORT --identity DIRECTORY --peer-cert FILE --side EDGE"
+                    )
+                })?
+                .parse()?;
+            let mut identity = None;
+            let mut peer_certificate = None;
+            let mut monitor = None;
+            let mut side = Edge::Right;
+            let mut shortcut = "ctrl+shift+Q".to_owned();
+            let mut clipboard = false;
+            let mut sensitivity = 1.0;
+            while let Some(option) = args.next() {
+                match option.as_str() {
+                    "--identity" => {
+                        identity = Some(PathBuf::from(next_value(&mut args, "--identity")?))
+                    }
+                    "--peer-cert" => {
+                        peer_certificate =
+                            Some(PathBuf::from(next_value(&mut args, "--peer-cert")?))
+                    }
+                    "--monitor" => monitor = Some(next_value(&mut args, "--monitor")?),
+                    "--side" => side = portal::parse_edge(&next_value(&mut args, "--side")?)?,
+                    "--return-shortcut" => shortcut = next_value(&mut args, "--return-shortcut")?,
+                    "--clipboard" => clipboard = true,
+                    "--sensitivity" => {
+                        let percent: u32 = next_value(&mut args, "--sensitivity")?.parse()?;
+                        anyhow::ensure!((5..=300).contains(&percent), "invalid --sensitivity");
+                        sensitivity = f64::from(percent) / 100.0;
+                    }
+                    _ => anyhow::bail!("unknown option: {option}"),
+                }
+            }
+            portal::run(portal::PortalOptions {
+                peer,
+                identity: identity
+                    .ok_or_else(|| anyhow::anyhow!("missing --identity DIRECTORY"))?,
+                peer_certificate: peer_certificate
+                    .ok_or_else(|| anyhow::anyhow!("missing --peer-cert FILE"))?,
+                monitor,
+                side,
+                shortcut: vortal_input_linux::keymap::parse_shortcut(&shortcut)
+                    .ok_or_else(|| anyhow::anyhow!("invalid --return-shortcut"))?,
+                clipboard,
+                sensitivity,
+            })
+            .await
+        }
+        _ => anyhow::bail!("usage: vortal <identity|serve|connect|pair|portal> [options]"),
     }
 }
 
