@@ -15,5 +15,5 @@ assignees: ""
 ## Actual behavior
 
 ## Environment
-- Vortal version:
+- Hliðskjálf version:
 - OS and version:

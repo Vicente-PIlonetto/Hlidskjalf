@@ -70,14 +70,14 @@ function startClipboard() {
 
 function cliPath() {
   return app.isPackaged
-    ? path.join(process.resourcesPath, 'bin', 'vortal.exe')
-    : path.join(__dirname, '..', 'dist', 'windows', 'resources', 'bin', 'vortal.exe');
+    ? path.join(process.resourcesPath, 'bin', 'hlidskjalf.exe')
+    : path.join(__dirname, '..', 'dist', 'windows', 'resources', 'bin', 'hlidskjalf.exe');
 }
 
 function motionPath() {
   return app.isPackaged
-    ? path.join(process.resourcesPath, 'bin', 'vortal-motion.exe')
-    : path.join(__dirname, '..', 'dist', 'windows', 'resources', 'bin', 'vortal-motion.exe');
+    ? path.join(process.resourcesPath, 'bin', 'hlidskjalf-motion.exe')
+    : path.join(__dirname, '..', 'dist', 'windows', 'resources', 'bin', 'hlidskjalf-motion.exe');
 }
 
 function hideCursorShield() {
@@ -155,7 +155,7 @@ function stopEdgeCapture() {
     const timer = setTimeout(() => { if (helper.exitCode === null) helper.kill(); }, 150);
     timer.unref();
   }
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('vortal:edge-state', false);
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('hlidskjalf:edge-state', false);
 }
 
 function startEdgeCapture(display, side, point) {
@@ -185,13 +185,13 @@ function startEdgeCapture(display, side, point) {
     while ((end = buffer.indexOf('\n')) >= 0) {
       const line = buffer.slice(0, end).trim();
       buffer = buffer.slice(end + 1);
-      if (line === 'VORTAL_MOTION_READY') {
+      if (line === 'HLIDSKJALF_MOTION_READY') {
         if (!edgeActive || motion !== helper) continue;
         ready = true;
         showCursorShield(display);
         writeInput({ type: 'enterScreen', edge: side, position });
-        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('vortal:edge-state', true);
-      } else if (line === 'VORTAL_MOTION_RETURN') {
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('hlidskjalf:edge-state', true);
+      } else if (line === 'HLIDSKJALF_MOTION_RETURN') {
         stopEdgeCapture();
       } else if (ready && edgeActive) {
         try {
@@ -205,7 +205,7 @@ function startEdgeCapture(display, side, point) {
     if (motion !== helper) return;
     stopEdgeCapture();
     if (code !== 0 && mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('vortal:input-error', helperError.includes('selected keyboard layout is not installed')
+      mainWindow.webContents.send('hlidskjalf:input-error', helperError.includes('selected keyboard layout is not installed')
         ? 'layoutUnavailable' : 'captureFailed');
     }
   });
@@ -326,7 +326,7 @@ function validAddress(value) {
 
 function sendStatus(window, status, detail = '') {
   const target = window && !window.isDestroyed() ? window : mainWindow;
-  if (target && !target.isDestroyed()) target.webContents.send('vortal:session', { status, detail });
+  if (target && !target.isDestroyed()) target.webContents.send('hlidskjalf:session', { status, detail });
 }
 
 function cancelReconnect() {
@@ -345,14 +345,14 @@ function scheduleReconnect(window, detail = '') {
   }, delay);
 }
 
-ipcMain.handle('vortal:setup', async () => ({
+ipcMain.handle('hlidskjalf:setup', async () => ({
   identityReady: fs.existsSync(path.join(identityPath(), 'key.der'))
     && fs.existsSync(path.join(identityPath(), 'cert.der')),
   certificate: path.join(identityPath(), 'cert.der'),
   peerReady: fs.existsSync(peerCertPath()),
 }));
 
-ipcMain.handle('vortal:startup', async (_event, enabled) => {
+ipcMain.handle('hlidskjalf:startup', async (_event, enabled) => {
   if (typeof enabled === 'boolean') {
     if (!app.isPackaged) throw new Error('Startup requires the packaged app');
     app.setLoginItemSettings({ openAtLogin: enabled });
@@ -360,34 +360,34 @@ ipcMain.handle('vortal:startup', async (_event, enabled) => {
   return app.getLoginItemSettings().openAtLogin;
 });
 
-ipcMain.handle('vortal:clipboard-enabled', async (_event, enabled) => {
+ipcMain.handle('hlidskjalf:clipboard-enabled', async (_event, enabled) => {
   if (typeof enabled !== 'boolean') throw new Error('Invalid clipboard setting');
   clipboardEnabled = enabled;
   startClipboard();
   return clipboardEnabled;
 });
 
-ipcMain.handle('vortal:audio-enabled', async (_event, enabled) => {
+ipcMain.handle('hlidskjalf:audio-enabled', async (_event, enabled) => {
   if (typeof enabled !== 'boolean') throw new Error('Invalid audio setting');
   audioEnabled = enabled;
   if (sessionConnected) writeInput({ type: 'audioControl', enabled });
   return audioEnabled;
 });
 
-ipcMain.handle('vortal:locale', async (_event, language) => {
+ipcMain.handle('hlidskjalf:locale', async (_event, language) => {
   if (language !== 'pt-BR' && language !== 'en') throw new Error('Unsupported language');
-  const file = path.join(__dirname, '..', 'crates', 'vortal-ui', 'ui', 'locales', `${language}.json`);
+  const file = path.join(__dirname, '..', 'crates', 'hlidskjalf-ui', 'ui', 'locales', `${language}.json`);
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 });
 
-ipcMain.handle('vortal:displays', async () => screen.getAllDisplays().map((display, index) => ({
+ipcMain.handle('hlidskjalf:displays', async () => screen.getAllDisplays().map((display, index) => ({
   id: String(display.id),
   label: display.label || `${index + 1} · ${display.bounds.width}×${display.bounds.height}`,
   width: display.bounds.width,
   height: display.bounds.height,
 })));
 
-ipcMain.handle('vortal:edge-config', async (_event, config) => {
+ipcMain.handle('hlidskjalf:edge-config', async (_event, config) => {
   if (!config || !['Left', 'Right', 'Top', 'Bottom'].includes(config.side)
     || !screen.getAllDisplays().some((display) => String(display.id) === String(config.displayId))) {
     throw new Error('Invalid screen edge configuration');
@@ -398,7 +398,7 @@ ipcMain.handle('vortal:edge-config', async (_event, config) => {
   return true;
 });
 
-ipcMain.handle('vortal:input-settings', async (_event, config) => {
+ipcMain.handle('hlidskjalf:input-settings', async (_event, config) => {
   if (!config || !Number.isInteger(config.sensitivity) || config.sensitivity < 5
     || config.sensitivity > 100 || !Number.isInteger(config.scrollSensitivity)
     || config.scrollSensitivity < 25 || config.scrollSensitivity > 300
@@ -419,7 +419,7 @@ ipcMain.handle('vortal:input-settings', async (_event, config) => {
   return true;
 });
 
-ipcMain.on('vortal:edge-return', (event) => {
+ipcMain.on('hlidskjalf:edge-return', (event) => {
   if (mainWindow && event.sender === mainWindow.webContents) stopEdgeCapture();
 });
 
@@ -439,9 +439,9 @@ async function ensureIdentity() {
   return certificate;
 }
 
-ipcMain.handle('vortal:create-identity', async () => ({ certificate: await ensureIdentity() }));
+ipcMain.handle('hlidskjalf:create-identity', async () => ({ certificate: await ensureIdentity() }));
 
-ipcMain.handle('vortal:choose-peer-cert', async (event) => {
+ipcMain.handle('hlidskjalf:choose-peer-cert', async (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   const result = await dialog.showOpenDialog(window, { properties: ['openFile'], filters: [{ name: 'DER certificate', extensions: ['der'] }] });
   if (result.canceled || !result.filePaths[0]) return false;
@@ -450,7 +450,7 @@ ipcMain.handle('vortal:choose-peer-cert', async (event) => {
   return true;
 });
 
-ipcMain.handle('vortal:pair-by-id', async (_event, rawId) => {
+ipcMain.handle('hlidskjalf:pair-by-id', async (_event, rawId) => {
   const id = String(rawId || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (!/^[A-Z]{2}\d{6}$/.test(id)) throw new Error('pairingInvalidId');
   await ensureIdentity();
@@ -491,7 +491,7 @@ function startSession(window, address) {
     while ((end = output.indexOf('\n')) >= 0) {
       const line = output.slice(0, end).trim();
       output = output.slice(end + 1);
-      if (line === 'VORTAL_INPUT_CONNECTED') {
+      if (line === 'HLIDSKJALF_INPUT_CONNECTED') {
         if (session !== child) continue;
         sessionConnected = true;
         updateEdgePolling();
@@ -499,7 +499,7 @@ function startSession(window, address) {
         startClipboard();
         writeInput({ type: 'audioControl', enabled: audioEnabled });
         sendStatus(window, 'connected');
-      } else if (line === 'VORTAL_INPUT_RETURN') {
+      } else if (line === 'HLIDSKJALF_INPUT_RETURN') {
         stopEdgeCapture();
         sendStatus(window, 'returned');
       } else if (line.startsWith('{')) {
@@ -514,7 +514,7 @@ function startSession(window, address) {
             fileClipboard.receive(message);
           } else if (message.type === 'audioPcm' && audioEnabled && typeof message.data === 'string'
             && message.data.length <= 5200 && !window.isDestroyed()) {
-            window.webContents.send('vortal:audio', message.data);
+            window.webContents.send('hlidskjalf:audio', message.data);
           }
         } catch { /* Ignore malformed helper output. */ }
       }
@@ -542,7 +542,7 @@ function startSession(window, address) {
   sendStatus(window, 'connecting');
 }
 
-ipcMain.handle('vortal:connect', async (event, address) => {
+ipcMain.handle('hlidskjalf:connect', async (event, address) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   if (!validAddress(address)) throw new Error('Invalid peer address');
   if (!fs.existsSync(peerCertPath())) throw new Error('Peer certificate missing');
@@ -555,7 +555,7 @@ ipcMain.handle('vortal:connect', async (event, address) => {
   return true;
 });
 
-ipcMain.on('vortal:input', (_event, input) => {
+ipcMain.on('hlidskjalf:input', (_event, input) => {
   if (!session || !session.stdin.writable || !input || typeof input !== 'object') return;
   if (input.type === 'leaveScreen') { writeInput({ type: 'leaveScreen' }); return; }
   if (input.type === 'enterScreen') {
@@ -572,7 +572,7 @@ ipcMain.on('vortal:input', (_event, input) => {
   writeInput(input);
 });
 
-ipcMain.on('vortal:disconnect', () => {
+ipcMain.on('hlidskjalf:disconnect', () => {
   desiredAddress = null;
   cancelReconnect();
   sessionConnected = false;
@@ -595,8 +595,8 @@ function createWindow() {
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#080808',
-    title: 'Vortal',
-    icon: path.join(__dirname, '..', 'crates', 'vortal-desktop', 'assets', 'vortal.ico'),
+    title: 'Hliðskjálf',
+    icon: path.join(__dirname, '..', 'crates', 'hlidskjalf-desktop', 'assets', 'hlidskjalf.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -607,11 +607,11 @@ function createWindow() {
   mainWindow = window;
 
   Menu.setApplicationMenu(null);
-  window.loadFile(path.join(__dirname, '..', 'crates', 'vortal-ui', 'ui', 'index.html'));
+  window.loadFile(path.join(__dirname, '..', 'crates', 'hlidskjalf-ui', 'ui', 'index.html'));
   window.once('ready-to-show', () => window.show());
   window.webContents.on('will-navigate', (event, url) => {
     event.preventDefault();
-    if (url === 'https://github.com/Vicente-PIlonetto/Vortal') void shell.openExternal(url);
+    if (url === 'https://github.com/Vicente-PIlonetto/Hlidskjalf') void shell.openExternal(url);
   });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('render-process-gone', () => { stopEdgeCapture(); if (session) session.kill(); });
@@ -632,12 +632,12 @@ function showMainWindow() {
 }
 
 function createTray() {
-  const icon = path.join(__dirname, '..', 'crates', 'vortal-desktop', 'assets', 'vortal.ico');
+  const icon = path.join(__dirname, '..', 'crates', 'hlidskjalf-desktop', 'assets', 'hlidskjalf.ico');
   const language = app.getLocale().toLowerCase().startsWith('pt') ? 'pt-BR' : 'en';
-  const file = path.join(__dirname, '..', 'crates', 'vortal-ui', 'ui', 'locales', `${language}.json`);
+  const file = path.join(__dirname, '..', 'crates', 'hlidskjalf-ui', 'ui', 'locales', `${language}.json`);
   const labels = JSON.parse(fs.readFileSync(file, 'utf8'));
   tray = new Tray(icon);
-  tray.setToolTip('Vortal');
+  tray.setToolTip('Hliðskjálf');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: labels.trayOpen, click: showMainWindow },
     { type: 'separator' },
@@ -652,7 +652,7 @@ else app.on('second-instance', showMainWindow);
 
 app.whenReady().then(() => {
   if (!hasInstanceLock) return;
-  app.setName('Vortal');
+  app.setName('Hliðskjálf');
   fileClipboard = createFileClipboard({
     dataDirectory: app.getPath('userData'),
     canTransfer: () => clipboardEnabled && sessionConnected && Boolean(session?.stdin.writable),

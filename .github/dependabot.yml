@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: weekly
   - package-ecosystem: npm
-    directory: "/crates/vortal-ui"
+    directory: "/crates/hlidskjalf-ui"
     schedule:
       interval: weekly
   - package-ecosystem: github-actions

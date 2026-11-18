@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Hliðskjálf
+Comment=Configuração de conexão Hliðskjálf
+Exec=hlidskjalf-desktop
+Icon=com.hlidskjalf.desktop
+Terminal=false
+Categories=Network;Utility;
+StartupWMClass=com.hlidskjalf.desktop

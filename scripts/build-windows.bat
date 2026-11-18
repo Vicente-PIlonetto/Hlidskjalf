@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0.."
-echo Vortal para Windows: app Rust
+echo Hliðskjálf para Windows: app Rust
 echo Requisitos: Rust 1.85+, ferramentas C++ do Visual Studio e NSIS.
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%CD%\scripts\build-windows.ps1"
 if errorlevel 1 (
@@ -11,5 +11,5 @@ if errorlevel 1 (
   exit /b 1
 )
 echo.
-echo Instalador pronto em dist\windows-native\Vortal-Setup-Rust-x64.exe
+echo Instalador pronto em dist\windows-native\Hlidskjalf-Setup-Rust-x64.exe
 pause

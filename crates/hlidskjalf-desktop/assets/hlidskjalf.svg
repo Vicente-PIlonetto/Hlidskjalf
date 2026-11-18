@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect x="8" y="8" width="112" height="112" fill="#181818" stroke="#f5f5f5" stroke-width="3"/>
+  <!-- ᚼ hagall, the Younger Futhark rune that opens the name Hliðskjálf -->
+  <path d="M64 30V98M42 44 86 84M86 44 42 84" fill="none" stroke="#f5f5f5" stroke-linecap="square" stroke-width="10"/>
+</svg>
