@@ -1,7 +1,8 @@
 #[cfg(windows)]
 mod windows {
     use std::{
-        collections::HashSet,
+        cell::RefCell,
+        collections::{HashMap, HashSet},
         io::{self, BufRead, Write},
         ptr,
         sync::{
@@ -19,7 +20,7 @@ mod windows {
         Foundation::{LPARAM, LRESULT, POINT, WPARAM},
         Graphics::Gdi::{GetMonitorInfoW, MonitorFromPoint, MONITORINFO, MONITOR_DEFAULTTONEAREST},
         UI::Input::KeyboardAndMouse::{
-            GetKeyboardLayout, GetKeyboardLayoutList, MapVirtualKeyExW, MAPVK_VK_TO_CHAR,
+            GetKeyboardLayout, GetKeyboardLayoutList, MapVirtualKeyExW, ToUnicodeEx,
             MAPVK_VSC_TO_VK_EX,
         },
         UI::WindowsAndMessaging::{
@@ -46,7 +47,11 @@ mod windows {
     static CENTER_X: AtomicI32 = AtomicI32::new(0);
     static CENTER_Y: AtomicI32 = AtomicI32::new(0);
     static MODIFIERS: AtomicU8 = AtomicU8::new(0);
+    static RIGHT_ALT_DOWN: AtomicBool = AtomicBool::new(false);
     static RETURN_CHORD: OnceLock<(u8, u32)> = OnceLock::new();
+    thread_local! {
+        static ACTIVE_KEY_CODES: RefCell<HashMap<(u32, u32, bool), u32>> = RefCell::new(HashMap::new());
+    }
 
     fn modifier_bit(vk: u32) -> u8 {
         match vk {
@@ -92,13 +97,11 @@ mod windows {
     }
 
     fn key_code(vk: u32, scan: u32, extended: bool) -> Option<u32> {
-        if (0x30..=0x39).contains(&vk) || (0x41..=0x5a).contains(&vk) {
-            return Some(vk);
-        }
-        if (0x70..=0x7b).contains(&vk) {
-            return Some(vk + 188);
-        }
-        if matches!(vk, 0xba..=0xc2 | 0xdb..=0xde | 0xe2) {
+        let modifiers = MODIFIERS.load(Ordering::Relaxed);
+        let altgr = RIGHT_ALT_DOWN.load(Ordering::Relaxed);
+        let printable = matches!(vk, 0x30..=0x39 | 0x41..=0x5a | 0xba..=0xc2 | 0xdb..=0xde | 0xe2);
+        let shortcut = modifiers & 5 != 0 && !altgr;
+        if printable && !shortcut && (altgr || matches!(vk, 0xba..=0xc2 | 0xdb..=0xde | 0xe2)) {
             let selected = LAYOUT.get().copied().unwrap_or(0);
             let layout = if selected == 0 {
                 let foreground = unsafe { GetForegroundWindow() };
@@ -113,30 +116,53 @@ mod windows {
                 let physical_scan = scan | if extended { 0xe000 } else { 0 };
                 unsafe { MapVirtualKeyExW(physical_scan, MAPVK_VSC_TO_VK_EX, layout) }
             };
-            let translated = unsafe { MapVirtualKeyExW(mapped_vk, MAPVK_VK_TO_CHAR, layout) };
-            let character = translated & 0xffff;
-            if character != 0 {
-                if translated & 0x8000_0000 != 0 {
-                    let dead = match character {
-                        0x60 => 0xfe50, // grave
-                        0xb4 => 0xfe51, // acute
-                        0x5e => 0xfe52, // circumflex
-                        0x7e => 0xfe53, // tilde
-                        0xa8 => 0xfe57, // diaeresis
-                        _ => 0,
-                    };
-                    if dead != 0 {
-                        return Some(keycode::DEAD_BASE + dead);
+            let mut state = [0_u8; 256];
+            if modifiers & 2 != 0 {
+                state[0x10] = 0x80;
+            }
+            if altgr {
+                state[0x11] = 0x80;
+                state[0x12] = 0x80;
+                state[0xa2] = 0x80;
+                state[0xa5] = 0x80;
+            }
+            let mut output = [0_u16; 4];
+            let length = unsafe {
+                ToUnicodeEx(
+                    mapped_vk,
+                    scan,
+                    state.as_ptr(),
+                    output.as_mut_ptr(),
+                    4,
+                    4,
+                    layout,
+                )
+            };
+            if length == 1 {
+                if let Some(character) = char::from_u32(u32::from(output[0])) {
+                    if !character.is_control() {
+                        return Some(keycode::UNICODE_BASE + character as u32);
                     }
                 }
-                if character >= 0x20 {
-                    return Some(if character <= 0x7e {
-                        character
-                    } else {
-                        keycode::UNICODE_BASE + character
-                    });
+            } else if length < 0 {
+                let dead = match output[0] {
+                    0x60 => 0xfe50,
+                    0xb4 => 0xfe51,
+                    0x5e => 0xfe52,
+                    0x7e => 0xfe53,
+                    0xa8 => 0xfe57,
+                    _ => 0,
+                };
+                if dead != 0 {
+                    return Some(keycode::DEAD_BASE + dead);
                 }
             }
+        }
+        if (0x30..=0x39).contains(&vk) || (0x41..=0x5a).contains(&vk) {
+            return Some(vk);
+        }
+        if (0x70..=0x7b).contains(&vk) {
+            return Some(vk + 188);
         }
         Some(match vk {
             0x0d => 256,
@@ -201,6 +227,10 @@ mod windows {
         let released = matches!(wparam as u32, WM_KEYUP | WM_SYSKEYUP);
         if pressed || released {
             let key = unsafe { &*(lparam as *const KBDLLHOOKSTRUCT) };
+            let extended = key.flags & LLKHF_EXTENDED != 0;
+            if key.vkCode == 0xa5 || key.vkCode == 0x12 && extended {
+                RIGHT_ALT_DOWN.store(pressed, Ordering::Relaxed);
+            }
             let bit = modifier_bit(key.vkCode);
             if bit != 0 {
                 if pressed {
@@ -214,9 +244,22 @@ mod windows {
             });
             if return_pressed {
                 send(HookEvent::Return);
-            } else if let Some(mapped) =
-                key_code(key.vkCode, key.scanCode, key.flags & LLKHF_EXTENDED != 0)
-            {
+            } else if let Some(mapped) = ACTIVE_KEY_CODES.with(|active| {
+                let mut active = active.borrow_mut();
+                let physical = (key.vkCode, key.scanCode, extended);
+                if pressed {
+                    let mapped = active
+                        .get(&physical)
+                        .copied()
+                        .or_else(|| key_code(key.vkCode, key.scanCode, extended));
+                    if let Some(mapped) = mapped {
+                        active.insert(physical, mapped);
+                    }
+                    mapped
+                } else {
+                    active.remove(&physical)
+                }
+            }) {
                 send(HookEvent::Key(mapped, pressed));
             }
             return 1;

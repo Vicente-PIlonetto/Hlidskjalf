@@ -17,6 +17,7 @@ use anyhow::{bail, Context};
 use base64::Engine as _;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
+use vortal_input::keycode;
 use windows_sys::Win32::{
     Foundation::{GlobalFree, POINT},
     System::{
@@ -1144,7 +1145,7 @@ fn valid_input(event: &Value) -> bool {
             event
                 .get("code")
                 .and_then(Value::as_u64)
-                .is_some_and(|value| value <= 65535)
+                .is_some_and(keycode::is_wire_code)
                 && event.get("pressed").and_then(Value::as_bool).is_some()
         }
         _ => false,

@@ -36,6 +36,34 @@ pub mod keycode {
     pub const INSERT: u32 = 278;
     pub const CAPS_LOCK: u32 = 279;
     pub const F1: u32 = 300;
+
+    pub fn is_wire_code(code: u64) -> bool {
+        code <= 65535
+            || (u64::from(UNICODE_BASE)..=u64::from(UNICODE_BASE + 0x10ffff)).contains(&code)
+            || (u64::from(DEAD_BASE + 0xfe50)..=u64::from(DEAD_BASE + 0xfe57)).contains(&code)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::keycode;
+
+    #[test]
+    fn wire_codes_preserve_unicode_and_dead_keys() {
+        assert!(keycode::is_wire_code(u64::from(
+            keycode::UNICODE_BASE + 'ç' as u32
+        )));
+        assert!(keycode::is_wire_code(u64::from(
+            keycode::UNICODE_BASE + '@' as u32
+        )));
+        assert!(keycode::is_wire_code(u64::from(
+            keycode::DEAD_BASE + 0xfe51
+        )));
+        assert!(!keycode::is_wire_code(u64::from(
+            keycode::DEAD_BASE + 0xfe58
+        )));
+        assert!(!keycode::is_wire_code(u64::MAX));
+    }
 }
 
 #[derive(Debug, Error)]

@@ -3295,6 +3295,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "tao",
+ "vortal-input",
  "vortal-net",
  "windows-sys 0.61.2",
  "wry",

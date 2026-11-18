@@ -163,6 +163,16 @@ mod wayland {
                     }
                     let mapped = map_key(key.keycode)
                         .ok_or_else(|| InputError::Unsupported("keycode".into()))?;
+                    let translated_character = (keycode::UNICODE_BASE
+                        ..=keycode::UNICODE_BASE + 0x10ffff)
+                        .contains(&key.keycode);
+                    if key.pressed && translated_character {
+                        self.transient_keys.insert(key.keycode);
+                        device
+                            .key(mapped, Direction::Click)
+                            .map_err(|error| InputError::Backend(error.to_string()))?;
+                        return Ok(());
+                    }
                     let mut modifiers = self.modifiers.clone();
                     let caps_applies = self.remote_caps_lock
                         && (65..=90).contains(&key.keycode)
