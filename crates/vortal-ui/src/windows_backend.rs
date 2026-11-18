@@ -1,7 +1,7 @@
 use std::{
     fs,
     io::{BufRead, BufReader, Write},
-    net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream},
+    net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream, UdpSocket},
     path::PathBuf,
     process::{Child, ChildStdin, Command, Stdio},
     sync::{
@@ -229,7 +229,10 @@ impl Backend {
         }
         self.ensure_identity()?;
         let local_cert = fs::read(self.identity_dir().join("cert.der"))?;
-        let peers = tailscale_peers()?;
+        let mut peers = local_peers(&id);
+        peers.extend(tailscale_peers().unwrap_or_default());
+        peers.sort_unstable();
+        peers.dedup();
         if peers.is_empty() {
             bail!("idNotFound");
         }
@@ -1207,6 +1210,45 @@ fn tailscale_peers() -> anyhow::Result<Vec<Ipv4Addr>> {
         return Ok(addresses);
     }
     bail!("tailscaleUnavailable")
+}
+
+fn local_peers(id: &str) -> Vec<Ipv4Addr> {
+    let Ok(socket) = UdpSocket::bind("0.0.0.0:0") else {
+        return Vec::new();
+    };
+    if socket.set_broadcast(true).is_err()
+        || socket
+            .set_read_timeout(Some(Duration::from_secs(2)))
+            .is_err()
+        || socket
+            .send_to(
+                format!("VORTAL_DISCOVER {id}").as_bytes(),
+                "255.255.255.255:24802",
+            )
+            .is_err()
+    {
+        return Vec::new();
+    }
+    let expected = format!("VORTAL_HERE {id}");
+    let mut addresses = Vec::new();
+    let mut buffer = [0_u8; 64];
+    let deadline = Instant::now() + Duration::from_secs(2);
+    while let Some(remaining) = deadline.checked_duration_since(Instant::now()) {
+        if socket.set_read_timeout(Some(remaining)).is_err() {
+            break;
+        }
+        let Ok((length, source)) = socket.recv_from(&mut buffer) else {
+            break;
+        };
+        if buffer[..length] == *expected.as_bytes() {
+            if let IpAddr::V4(address) = source.ip() {
+                if address.is_private() {
+                    addresses.push(address);
+                }
+            }
+        }
+    }
+    addresses
 }
 
 fn pair_at_address(

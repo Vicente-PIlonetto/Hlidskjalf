@@ -1,4 +1,8 @@
-use std::{net::SocketAddr, path::Path, time::Duration};
+use std::{
+    net::{Ipv4Addr, SocketAddr},
+    path::Path,
+    time::Duration,
+};
 
 use anyhow::{bail, Context, Result};
 use base64::Engine;
@@ -6,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
-    net::{TcpListener, TcpStream},
+    net::{TcpListener, TcpStream, UdpSocket},
     sync::mpsc,
     time,
 };
@@ -53,8 +57,17 @@ pub async fn serve(
     let _ = std::fs::remove_file(&decision);
     let listener = TcpListener::bind("0.0.0.0:24801")
         .await
-        .context("could not start Tailscale pairing listener")?;
+        .context("could not start pairing listener")?;
+    let discovery = UdpSocket::bind("0.0.0.0:24802")
+        .await
+        .context("could not start local discovery listener")?;
     tracing::info!(%id, "pairing listener ready");
+    let discovery_id = id.clone();
+    tokio::spawn(async move {
+        if let Err(error) = serve_discovery(discovery, &discovery_id).await {
+            tracing::warn!(%error, "local discovery stopped");
+        }
+    });
     loop {
         let (stream, address) = listener.accept().await?;
         if let Err(error) = handle_request(
@@ -86,11 +99,10 @@ async fn handle_request(
     reload: &mpsc::Sender<()>,
 ) -> Result<()> {
     let std::net::IpAddr::V4(ip) = address.ip() else {
-        bail!("pairing requires an IPv4 Tailscale address");
+        bail!("pairing requires an IPv4 local or Tailscale address");
     };
-    let octets = ip.octets();
-    if octets[0] != 100 || !(64..=127).contains(&octets[1]) {
-        bail!("pairing request is outside the Tailscale address range");
+    if !pairing_address_allowed(ip) {
+        bail!("pairing request is outside a local or Tailscale network");
     }
     let (reader, mut writer) = stream.into_split();
     let mut line = String::new();
@@ -162,9 +174,40 @@ async fn handle_request(
     Ok(())
 }
 
+fn pairing_address_allowed(ip: Ipv4Addr) -> bool {
+    let octets = ip.octets();
+    ip.is_private() || (octets[0] == 100 && (64..=127).contains(&octets[1]))
+}
+
+async fn serve_discovery(socket: UdpSocket, id: &str) -> Result<()> {
+    let request = format!("VORTAL_DISCOVER {id}");
+    let response = format!("VORTAL_HERE {id}");
+    let mut buffer = [0_u8; 64];
+    loop {
+        let (length, sender) = socket.recv_from(&mut buffer).await?;
+        if let std::net::IpAddr::V4(ip) = sender.ip() {
+            if pairing_address_allowed(ip) && buffer[..length] == *request.as_bytes() {
+                if let Err(error) = socket.send_to(response.as_bytes(), sender).await {
+                    tracing::debug!(%error, %sender, "could not answer local discovery");
+                }
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::device_id;
+    use super::{device_id, pairing_address_allowed};
+    use std::net::Ipv4Addr;
+
+    #[test]
+    fn pairing_accepts_private_and_tailscale_addresses() {
+        assert!(pairing_address_allowed(Ipv4Addr::new(192, 168, 18, 2)));
+        assert!(pairing_address_allowed(Ipv4Addr::new(10, 0, 0, 2)));
+        assert!(pairing_address_allowed(Ipv4Addr::new(100, 79, 2, 3)));
+        assert!(!pairing_address_allowed(Ipv4Addr::new(8, 8, 8, 8)));
+        assert!(!pairing_address_allowed(Ipv4Addr::LOCALHOST));
+    }
 
     #[test]
     fn pairing_id_is_stable_and_well_formed() {

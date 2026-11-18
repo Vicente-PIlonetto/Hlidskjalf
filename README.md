@@ -31,7 +31,7 @@ Ajuste mouse, teclado, atalho de retorno, inicialização, área de transferênc
 
 ## Como começar
 
-Você precisa de um **Windows x64** e de um **Linux com Wayland** na mesma rede. O receptor Linux foi testado no **Hyprland**. Tailscale é uma forma simples de colocar os dois computadores na mesma rede.
+Você precisa de um **Windows x64** e de um **Linux com Wayland** na mesma rede. O receptor Linux foi testado no **Hyprland**. O pareamento por ID descobre o Linux na rede local; Tailscale é opcional para computadores em redes diferentes.
 
 1. **No Linux:** instale o Vortal com `./scripts/install.sh`, abra o app e copie o ID mostrado em **Configurações**.
 2. **No Windows:** instale e abra o Vortal. Digite o ID do Linux e clique em **Parear**.

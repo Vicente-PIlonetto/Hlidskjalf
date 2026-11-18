@@ -568,7 +568,7 @@ if (window.vortalDesktop) {
       setRemoteStatus("pairingAllowed");
       window.setTimeout(() => start.click(), 800);
     } catch (error) {
-      const code = ["pairingDenied", "pairingTimedOut", "pairingInvalid", "pairingInvalidId", "idNotFound", "tailscaleUnavailable", "remoteMissingIdentity"]
+      const code = ["pairingDenied", "pairingTimedOut", "pairingInvalid", "pairingInvalidId", "idNotFound", "remoteMissingIdentity"]
         .find((candidate) => error.message.includes(candidate));
       setRemoteStatus(code || "remoteConnectionError");
     } finally { button.disabled = false; }

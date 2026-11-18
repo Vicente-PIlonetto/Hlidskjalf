@@ -12,7 +12,7 @@ mkdir -p "$HOME/.local/share/vortal"
 target/release/vortal identity linux --dir "$HOME/.local/share/vortal/identity"
 ```
 
-Para parear por ID, instale o app Linux com `./scripts/install.sh`, abra **Configurações** e veja o ID de duas letras e seis números. O receptor escuta TCP 24801 mesmo antes de haver certificado do Windows. O Windows e o Linux devem estar na mesma rede Tailscale. No Linux, clique em **Permitir** ao receber o pedido. A troca automática usa apenas `cert.der`; `key.der` nunca sai do dispositivo.
+Para parear por ID, instale o app Linux com `./scripts/install.sh`, abra **Configurações** e veja o ID de duas letras e seis números. O receptor anuncia o ID na rede local por UDP 24802 e escuta TCP 24801 mesmo antes de haver certificado do Windows. Os dois computadores devem estar na mesma rede local, ou na mesma rede Tailscale para acesso remoto. No Linux, clique em **Permitir** ao receber o pedido. A troca automática usa apenas `cert.der`; `key.der` nunca sai do dispositivo.
 
 Para pareamento manual, copie **somente** `$HOME/.local/share/vortal/identity/cert.der` para o Windows. Nunca copie `key.der`. Depois de criar a identidade no app Windows, copie o certificado público indicado pelo app para o Linux como `$HOME/.local/share/vortal/peer.der`.
 
@@ -22,7 +22,7 @@ Inicie o receptor no Linux, dentro da sessão Wayland do usuário:
 target/release/vortald --input --clipboard --audio --bind 0.0.0.0:24800 --identity "$HOME/.local/share/vortal/identity" --peer-cert "$HOME/.local/share/vortal/peer.der"
 ```
 
-Libere **UDP 24800** e **TCP 24801** na interface Tailscale do Linux. O injetor usa os protocolos de entrada virtual do compositor; foi inicializado e testado localmente no Hyprland. O processo encerra com uma mensagem se o compositor não oferecer esse acesso. Texto copiado requer `wl-copy` e `wl-paste`; áudio requer `parec` e o monitor do dispositivo de saída PipeWire/PulseAudio.
+Libere **UDP 24800**, **TCP 24801** e **UDP 24802** na rede usada. O injetor usa os protocolos de entrada virtual do compositor; foi inicializado e testado localmente no Hyprland. O processo encerra com uma mensagem se o compositor não oferecer esse acesso. Texto copiado requer `wl-copy` e `wl-paste`; áudio requer `parec` e o monitor do dispositivo de saída PipeWire/PulseAudio.
 
 ## Conectar no Windows
 
