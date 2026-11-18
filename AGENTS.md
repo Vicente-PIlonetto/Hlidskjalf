@@ -1,10 +1,10 @@
-# Vortal contributor instructions
+# Hliðskjálf contributor instructions
 
 ## Engineering rules
 
 - Use Rust 2021 or newer in the Cargo workspace. Async code uses Tokio, logs use `tracing`, library errors use `thiserror`, and binaries use `anyhow`.
 - Do not use `unwrap()` or `expect()` in production code. Keep `cargo clippy --workspace --all-targets -- -D warnings` and `cargo fmt --check` clean.
-- Platform-specific behavior stays behind traits. `vortal-core` must not import Windows or Wayland implementation code.
+- Platform-specific behavior stays behind traits. `hlidskjalf-core` must not import Windows or Wayland implementation code.
 - Fail safely: network, daemon, or backend failures must restore local input in under 500 ms. Never leave a user without local mouse or keyboard control.
 - Never commit secrets, keys, certificates, tokens, or local configuration.
 - Preserve the standalone VyLink repository boundary. Integrate through a dependency/API; never copy its code or use a Git submodule.
@@ -13,7 +13,7 @@
 
 - Keep `main` stable and protected; merge work through pull requests with green CI.
 - Use one short-lived branch per stage: `feat/`, `fix/`, `docs/`, `chore/`, or `refactor/`.
-- Use Conventional Commits. Scope names omit the `vortal-` crate prefix.
+- Use Conventional Commits. Scope names omit the `hlidskjalf-` crate prefix.
 - Use SemVer, starting at `0.1.0`; derive the changelog from commits. Tags `vX.Y.Z` trigger releases.
 - PR descriptions cover changes, test steps, risks, and a checklist.
 

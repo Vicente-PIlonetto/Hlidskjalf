@@ -1,4 +1,4 @@
-# Vortal: Windows controla Linux/Wayland
+# Hliðskjálf: Windows controla Linux/Wayland
 
 Este MVP envia mouse, teclado, texto e imagens copiadas, além de áudio do Linux, para uma sessão Windows/Linux autenticada por certificados. Após conectar, escolha o monitor e a borda na página **Portais**. Arraste o cursor para fora dessa borda para entrar no Linux; arraste de volta pela borda correspondente ou use o atalho configurado para retornar. A captura auxiliar se encerra se perder seus batimentos por 300 ms.
 
@@ -7,19 +7,19 @@ Este MVP envia mouse, teclado, texto e imagens copiadas, além de áudio do Linu
 Compile a CLI e o daemon com Rust 1.85 ou superior:
 
 ```sh
-cargo build -p vortal-cli -p vortal-daemon --release --locked
-mkdir -p "$HOME/.local/share/vortal"
-target/release/vortal identity linux --dir "$HOME/.local/share/vortal/identity"
+cargo build -p hlidskjalf-cli -p hlidskjalf-daemon --release --locked
+mkdir -p "$HOME/.local/share/hlidskjalf"
+target/release/hlidskjalf identity linux --dir "$HOME/.local/share/hlidskjalf/identity"
 ```
 
 Para parear por ID, instale o app Linux com `./scripts/install.sh`, abra **Configurações** e veja o ID de duas letras e seis números. O receptor anuncia o ID na rede local por UDP 24802 e escuta TCP 24801 mesmo antes de haver certificado do Windows. Os dois computadores devem estar na mesma rede local, ou na mesma rede Tailscale para acesso remoto. No Linux, clique em **Permitir** ao receber o pedido. A troca automática usa apenas `cert.der`; `key.der` nunca sai do dispositivo.
 
-Para pareamento manual, copie **somente** `$HOME/.local/share/vortal/identity/cert.der` para o Windows. Nunca copie `key.der`. Depois de criar a identidade no app Windows, copie o certificado público indicado pelo app para o Linux como `$HOME/.local/share/vortal/peer.der`.
+Para pareamento manual, copie **somente** `$HOME/.local/share/hlidskjalf/identity/cert.der` para o Windows. Nunca copie `key.der`. Depois de criar a identidade no app Windows, copie o certificado público indicado pelo app para o Linux como `$HOME/.local/share/hlidskjalf/peer.der`.
 
 Inicie o receptor no Linux, dentro da sessão Wayland do usuário:
 
 ```sh
-target/release/vortald --input --clipboard --audio --bind 0.0.0.0:24800 --identity "$HOME/.local/share/vortal/identity" --peer-cert "$HOME/.local/share/vortal/peer.der"
+target/release/hlidskjalfd --input --clipboard --audio --bind 0.0.0.0:24800 --identity "$HOME/.local/share/hlidskjalf/identity" --peer-cert "$HOME/.local/share/hlidskjalf/peer.der"
 ```
 
 Libere **UDP 24800**, **TCP 24801** e **UDP 24802** na rede usada. O injetor usa os protocolos de entrada virtual do compositor; foi inicializado e testado localmente no Hyprland. O processo encerra com uma mensagem se o compositor não oferecer esse acesso. Texto copiado requer `wl-copy` e `wl-paste`; áudio requer `parec` e o monitor do dispositivo de saída PipeWire/PulseAudio.
@@ -30,27 +30,27 @@ Libere **UDP 24800**, **TCP 24801** e **UDP 24802** na rede usada. O injetor usa
 2. Clique em **Criar identidade**. Copie o arquivo `cert.der` no caminho mostrado para o Linux como `peer.der`.
 3. Clique em **Selecionar certificado Linux** e escolha o `cert.der` recebido do Linux.
 4. Adicione o IP do Linux, incluindo o IP Tailscale se for essa a rede usada.
-5. Com `vortald --input` em execução no Linux, clique em **Conectar ao Linux**. O painel só mostra **Conectado** após o handshake autenticado.
+5. Com `hlidskjalfd --input` em execução no Linux, clique em **Conectar ao Linux**. O painel só mostra **Conectado** após o handshake autenticado.
 6. Abra **Portais**, escolha o monitor Windows e a borda de saída. Arraste o cursor até essa borda para controlar o Linux. No Hyprland, cruze a borda correspondente ou use o atalho configurado para voltar.
 7. Abra **Configurações** para ajustar mouse, rolagem, teclado, inicialização, conexão automática, área de transferência e áudio. Para compartilhar texto e áudio, ative as opções nos dois computadores.
 8. A área de captura na tela inicial continua disponível como alternativa manual. Clique em **Desconectar** para encerrar a sessão.
 
-Fechar a janela mantém o Vortal em segundo plano. Use o ícone na bandeja do Windows para reabrir ou sair do app.
+Fechar a janela mantém o Hliðskjálf em segundo plano. Use o ícone na bandeja do Windows para reabrir ou sair do app.
 
 O portal automático está disponível no app Windows x64. A captura nativa encaminha a tecla Windows como Super e não abre uma janela sobre programas em tela cheia. O compartilhamento da área de transferência aceita texto UTF-8 até 16 KiB; arquivos e imagens ainda não são transferidos. O áudio do Linux é enviado em PCM estéreo a 48 kHz por um fluxo QUIC separado do controle de entrada.
 
 ## Controlar este Windows (receptor)
 
-Um Windows também pode ser controlado por outro Windows com o Vortal.
+Um Windows também pode ser controlado por outro Windows com o Hliðskjálf.
 
 1. No Windows que será controlado, abra **Configurações** e ative **Permitir controle deste PC**. Anote o **ID deste PC**.
 2. No Windows que controla, digite esse ID e clique em **Parear**. Confirme o pedido no Windows controlado com **Permitir**.
 3. Configure o portal normalmente. Ao voltar pela borda de entrada, o controle retorna ao Windows de origem.
 
-Na primeira execução, o Windows pede para liberar o `vortald.exe` no firewall; permita em redes privadas. Sem permissão de administrador, crie as regras em um terminal elevado:
+Na primeira execução, o Windows pede para liberar o `hlidskjalfd.exe` no firewall; permita em redes privadas. Sem permissão de administrador, crie as regras em um terminal elevado:
 
 ```bat
-netsh advfirewall firewall add rule name="Vortal receptor" dir=in action=allow program="%LOCALAPPDATA%\Programs\VortalRust\vortald.exe" profile=private
+netsh advfirewall firewall add rule name="Hliðskjálf receptor" dir=in action=allow program="%LOCALAPPDATA%\Programs\Hlidskjalf\hlidskjalfd.exe" profile=private
 ```
 
 O receptor Windows aceita mouse, teclado (incluindo acentos por teclas mortas) e texto da área de transferência. Áudio, imagens e arquivos ainda não são enviados para um receptor Windows. Janelas executadas como administrador não recebem entrada de um app sem elevação, e a tela de bloqueio ou o UAC devolvem o controle ao computador de origem.
@@ -69,6 +69,6 @@ A captura lê o mouse e o teclado diretamente e exige que o usuário esteja no g
 
 ## Gerar o app Windows
 
-No Windows x64, instale Rust 1.85+, Visual Studio C++ Build Tools e NSIS; depois execute `scripts\build-windows.bat`. O instalador Rust fica em `dist\windows-native\Vortal-Setup-Rust-x64.exe`. A janela usa WebView2 e requer o WebView2 Runtime. O Vortal inicia na bandeja ao entrar no Windows; essa opção pode ser desativada em Configurações. A instalação fica em `VortalRust` para preservar a versão Electron anterior.
+No Windows x64, instale Rust 1.85+, Visual Studio C++ Build Tools e NSIS; depois execute `scripts\build-windows.bat`. O instalador Rust fica em `dist\windows-native\Hlidskjalf-Setup-Rust-x64.exe`. A janela usa WebView2 e requer o WebView2 Runtime. O Hliðskjálf inicia na bandeja ao entrar no Windows; essa opção pode ser desativada em Configurações. A instalação fica em `Hlidskjalf` para preservar a versão Electron anterior.
 
-Em Linux, `cargo xwin build --target x86_64-pc-windows-msvc -p vortal-desktop -p vortal-cli -p vortal-daemon -p vortal-input-windows --release --locked` gera os binários Windows. Em seguida, `makensis installers/windows/Vortal.nsi` gera o instalador nativo.
+Em Linux, `cargo xwin build --target x86_64-pc-windows-msvc -p hlidskjalf-desktop -p hlidskjalf-cli -p hlidskjalf-daemon -p hlidskjalf-input-windows --release --locked` gera os binários Windows. Em seguida, `makensis installers/windows/Hlidskjalf.nsi` gera o instalador nativo.

@@ -3224,7 +3224,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
-name = "vortal-cli"
+name = "hlidskjalf-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -3237,24 +3237,24 @@ dependencies = [
  "sha2",
  "tokio",
  "tracing",
- "vortal-input",
- "vortal-input-linux",
- "vortal-net",
- "vortal-proto",
- "vortal-vylink",
+ "hlidskjalf-input",
+ "hlidskjalf-input-linux",
+ "hlidskjalf-net",
+ "hlidskjalf-proto",
+ "hlidskjalf-vylink",
 ]
 
 [[package]]
-name = "vortal-core"
+name = "hlidskjalf-core"
 version = "0.1.0"
 dependencies = [
  "thiserror 2.0.21",
- "vortal-input",
- "vortal-proto",
+ "hlidskjalf-input",
+ "hlidskjalf-proto",
 ]
 
 [[package]]
-name = "vortal-daemon"
+name = "hlidskjalf-daemon"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -3268,34 +3268,34 @@ dependencies = [
  "tokio",
  "tracing",
  "url",
- "vortal-input",
- "vortal-input-linux",
- "vortal-input-windows",
- "vortal-net",
- "vortal-proto",
- "vortal-vylink",
+ "hlidskjalf-input",
+ "hlidskjalf-input-linux",
+ "hlidskjalf-input-windows",
+ "hlidskjalf-net",
+ "hlidskjalf-proto",
+ "hlidskjalf-vylink",
 ]
 
 [[package]]
-name = "vortal-desktop"
+name = "hlidskjalf-desktop"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "vortal-ui",
+ "hlidskjalf-ui",
 ]
 
 [[package]]
-name = "vortal-input"
+name = "hlidskjalf-input"
 version = "0.1.0"
 dependencies = [
  "async-trait",
  "thiserror 2.0.21",
  "tokio",
- "vortal-proto",
+ "hlidskjalf-proto",
 ]
 
 [[package]]
-name = "vortal-input-linux"
+name = "hlidskjalf-input-linux"
 version = "0.1.0"
 dependencies = [
  "async-trait",
@@ -3304,25 +3304,25 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vortal-input",
- "vortal-proto",
+ "hlidskjalf-input",
+ "hlidskjalf-proto",
  "wayland-protocols",
 ]
 
 [[package]]
-name = "vortal-input-windows"
+name = "hlidskjalf-input-windows"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
  "tokio",
- "vortal-input",
- "vortal-proto",
+ "hlidskjalf-input",
+ "hlidskjalf-proto",
  "windows-sys 0.61.2",
 ]
 
 [[package]]
-name = "vortal-net"
+name = "hlidskjalf-net"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -3331,12 +3331,12 @@ dependencies = [
  "rustls",
  "tokio",
  "tracing",
- "vortal-input",
- "vortal-proto",
+ "hlidskjalf-input",
+ "hlidskjalf-proto",
 ]
 
 [[package]]
-name = "vortal-proto"
+name = "hlidskjalf-proto"
 version = "0.1.0"
 dependencies = [
  "postcard",
@@ -3346,7 +3346,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "vortal-ui"
+name = "hlidskjalf-ui"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -3356,15 +3356,15 @@ dependencies = [
  "serde_json",
  "sha2",
  "tao",
- "vortal-input",
- "vortal-input-linux",
- "vortal-net",
+ "hlidskjalf-input",
+ "hlidskjalf-input-linux",
+ "hlidskjalf-net",
  "windows-sys 0.61.2",
  "wry",
 ]
 
 [[package]]
-name = "vortal-vylink"
+name = "hlidskjalf-vylink"
 version = "0.1.0"
 dependencies = [
  "async-trait",
@@ -3373,7 +3373,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vortal-input",
+ "hlidskjalf-input",
 ]
 
 [[package]]

@@ -2,15 +2,15 @@
 
 ## Objetivo
 
-Desenhar um wireframe navegável da experiência inicial do Vortal para controlar um computador Linux a partir do Windows. A pessoa deve conseguir entender como encontrar e autorizar o Linux, configurar a borda do monitor, conectar e recuperar o controle local. Esta entrega é de interface; não exige implementar o transporte, o daemon ou a captura de entrada.
+Desenhar um wireframe navegável da experiência inicial do Hliðskjálf para controlar um computador Linux a partir do Windows. A pessoa deve conseguir entender como encontrar e autorizar o Linux, configurar a borda do monitor, conectar e recuperar o controle local. Esta entrega é de interface; não exige implementar o transporte, o daemon ou a captura de entrada.
 
 ## Referências do projeto
 
 - `README.md`: produto, estado atual e forma de conexão.
 - `docs/design-system.md`: regras visuais e de acessibilidade.
-- `crates/vortal-ui/ui/index.html`: estrutura e elementos da interface existente.
-- `crates/vortal-ui/ui/tokens.css` e `app.css`: tokens e layout atuais.
-- `crates/vortal-ui/ui/locales/pt-BR.json` e `en.json`: textos existentes.
+- `crates/hlidskjalf-ui/ui/index.html`: estrutura e elementos da interface existente.
+- `crates/hlidskjalf-ui/ui/tokens.css` e `app.css`: tokens e layout atuais.
+- `crates/hlidskjalf-ui/ui/locales/pt-BR.json` e `en.json`: textos existentes.
 - `installers/windows/README.md`: fluxo experimental Windows → Linux.
 
 O wireframe pode reorganizar a interface atual para tornar o fluxo mais claro. Não apresente uma função futura como se já estivesse pronta: marque ações ainda não implementadas como conceito de interface.
@@ -24,7 +24,7 @@ O wireframe pode reorganizar a interface atual para tornar o fluxo mais claro. N
 
 ## Fluxos e estados obrigatórios
 
-- Primeiro uso: abrir o Vortal → informar ID ou IP do Linux → solicitar conexão → permitir no Linux → escolher monitor e borda → conectar → atravessar a borda.
+- Primeiro uso: abrir o Hliðskjálf → informar ID ou IP do Linux → solicitar conexão → permitir no Linux → escolher monitor e borda → conectar → atravessar a borda.
 - Retorno seguro: atravessar a borda de volta, usar o atalho configurado ou desconectar. A perda de conexão deve mostrar que mouse e teclado locais foram liberados; a interface não deve sugerir bloqueio persistente.
 - Erros: ID/IP inválido, Linux não encontrado, pedido recusado ou expirado, conexão perdida e falha ao capturar entrada.
 - Variações: sem dispositivos, aguardando permissão, conectado e desconectado.

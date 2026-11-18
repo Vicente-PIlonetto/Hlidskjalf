@@ -1,8 +1,8 @@
 {
-  "name": "vortal-desktop",
+  "name": "hlidskjalf-desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "Vortal desktop application",
+  "description": "Hliðskjálf desktop application",
   "main": "electron/main.cjs",
   "scripts": {
     "start": "electron .",
@@ -13,27 +13,27 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "com.vortal.desktop",
-    "productName": "Vortal",
+    "appId": "com.hlidskjalf.desktop",
+    "productName": "Hliðskjálf",
     "asar": true,
     "directories": {
       "output": "dist/windows-electron"
     },
     "files": [
       "electron/**/*",
-      "crates/vortal-ui/ui/**/*",
-      "crates/vortal-desktop/assets/vortal.ico",
+      "crates/hlidskjalf-ui/ui/**/*",
+      "crates/hlidskjalf-desktop/assets/hlidskjalf.ico",
       "package.json"
     ],
     "extraResources": [
       {
         "from": "dist/windows/resources/bin",
         "to": "bin",
-        "filter": ["vortal.exe", "vortald.exe", "vortal-motion.exe"]
+        "filter": ["hlidskjalf.exe", "hlidskjalfd.exe", "hlidskjalf-motion.exe"]
       }
     ],
     "win": {
-      "icon": "crates/vortal-desktop/assets/vortal.ico",
+      "icon": "crates/hlidskjalf-desktop/assets/hlidskjalf.ico",
       "target": ["nsis"]
     },
     "nsis": {
@@ -43,8 +43,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Vortal",
-      "artifactName": "Vortal-Setup-x64.exe",
+      "shortcutName": "Hliðskjálf",
+      "artifactName": "Hlidskjalf-Setup-x64.exe",
       "deleteAppDataOnUninstall": false
     }
   }

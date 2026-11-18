@@ -21,7 +21,7 @@ test('accepts multiple files and rejects path traversal', () => {
 });
 
 test('sends copied files and restores the receiving clipboard', async () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'vortal-files-'));
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'hlidskjalf-files-'));
   try {
     const first = path.join(directory, 'um.txt');
     const second = path.join(directory, 'dois.txt');
