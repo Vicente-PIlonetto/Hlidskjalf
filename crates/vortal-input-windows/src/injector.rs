@@ -14,11 +14,11 @@ use windows_sys::Win32::{
     UI::{
         Input::KeyboardAndMouse::{
             GetKeyState, MapVirtualKeyW, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, INPUT_MOUSE,
-            KEYBDINPUT, KEYEVENTF_EXTENDEDKEY, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, MAPVK_VK_TO_VSC,
-            MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_HWHEEL, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP,
-            MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_MOVE, MOUSEEVENTF_RIGHTDOWN,
-            MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_VIRTUALDESK, MOUSEEVENTF_WHEEL, MOUSEEVENTF_XDOWN,
-            MOUSEEVENTF_XUP, MOUSEINPUT,
+            KEYBDINPUT, KEYEVENTF_EXTENDEDKEY, KEYEVENTF_KEYUP, KEYEVENTF_SCANCODE,
+            KEYEVENTF_UNICODE, MAPVK_VK_TO_VSC, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_HWHEEL,
+            MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP,
+            MOUSEEVENTF_MOVE, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_VIRTUALDESK,
+            MOUSEEVENTF_WHEEL, MOUSEEVENTF_XDOWN, MOUSEEVENTF_XUP, MOUSEINPUT,
         },
         WindowsAndMessaging::{
             GetCursorPos, GetSystemMetrics, SetProcessDPIAware, SM_CXVIRTUALSCREEN,
@@ -40,6 +40,7 @@ pub struct WindowsInjector {
     active_edge: Option<Edge>,
     return_requested: bool,
     pressed_keys: BTreeSet<(u16, bool)>,
+    pressed_scancodes: BTreeSet<u32>,
     pressed_buttons: BTreeSet<u8>,
     transient_keys: BTreeSet<u32>,
     pending_dead: Option<u32>,
@@ -59,6 +60,7 @@ impl WindowsInjector {
             active_edge: None,
             return_requested: false,
             pressed_keys: BTreeSet::new(),
+            pressed_scancodes: BTreeSet::new(),
             pressed_buttons: BTreeSet::new(),
             transient_keys: BTreeSet::new(),
             pending_dead: None,
@@ -82,6 +84,12 @@ impl WindowsInjector {
 
     /// Never leaves a key or button held on this computer after control returns.
     fn release_all(&mut self) {
+        for scancode in std::mem::take(&mut self.pressed_scancodes)
+            .into_iter()
+            .rev()
+        {
+            let _ = send_scancode(scancode, false);
+        }
         for (vk, extended) in std::mem::take(&mut self.pressed_keys).into_iter().rev() {
             let _ = send_key(VirtualKey { vk, extended }, false);
         }
@@ -139,6 +147,21 @@ impl WindowsInjector {
         if horizontal != 0 {
             let amount = horizontal.saturating_mul(WHEEL_DELTA);
             send_mouse(0, 0, MOUSEEVENTF_HWHEEL, amount as u32)?;
+        }
+        Ok(())
+    }
+
+    /// A physical key from a sender that knows scancodes; this PC's own layout picks the character.
+    fn physical_key(&mut self, scancode: u32, pressed: bool) -> Result<(), InputError> {
+        if scancode & !0xe0ff != 0 {
+            return Err(InputError::Unsupported("scancode".into()));
+        }
+        self.pending_dead = None;
+        send_scancode(scancode, pressed)?;
+        if pressed {
+            self.pressed_scancodes.insert(scancode);
+        } else {
+            self.pressed_scancodes.remove(&scancode);
         }
         Ok(())
     }
@@ -253,6 +276,7 @@ impl InputInjector for WindowsInjector {
             Message::MouseMove(motion) => self.mouse_move(motion.dx, motion.dy),
             Message::MouseButton(button) => self.button(button.button, button.pressed),
             Message::MouseScroll(scroll) => self.scroll(scroll.horizontal, scroll.vertical),
+            Message::Key(key) if key.scancode != 0 => self.physical_key(key.scancode, key.pressed),
             Message::Key(key) => self.key(key.keycode, key.pressed),
             _ => Err(InputError::Unsupported("input message".into())),
         }
@@ -336,6 +360,18 @@ fn keyboard_input(vk: u16, scan: u16, flags: u32) -> INPUT {
             },
         },
     }
+}
+
+/// `scancode` is a PC set-1 make code; 0xE0xx marks the extended prefix.
+fn send_scancode(scancode: u32, pressed: bool) -> Result<(), InputError> {
+    let mut flags = KEYEVENTF_SCANCODE;
+    if scancode & 0xff00 == 0xe000 {
+        flags |= KEYEVENTF_EXTENDEDKEY;
+    }
+    if !pressed {
+        flags |= KEYEVENTF_KEYUP;
+    }
+    send(&[keyboard_input(0, (scancode & 0xff) as u16, flags)])
 }
 
 fn send_key(key: VirtualKey, pressed: bool) -> Result<(), InputError> {

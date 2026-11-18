@@ -65,6 +65,8 @@ pub struct MouseScroll {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Key {
+    /// PC set-1 make code of the physical key (0xE0xx for extended keys), or 0 when unknown.
+    /// Receivers that can inject physical keys prefer it, so their own layout picks characters.
     pub scancode: u32,
     pub keycode: u32,
     pub pressed: bool,
