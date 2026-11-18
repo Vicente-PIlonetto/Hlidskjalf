@@ -3,6 +3,7 @@
   "receiverLabel": "Permitir controle deste PC", "receiverHelp": "Outro Windows controla este PC pelo ID.", "receiverId": "ID deste PC", "receiverOff": "Desativado", "receiverStarting": "Iniciando…", "receiverWaiting": "Aguardando pareamento", "receiverReady": "Pronto para receber", "receiverControlled": "Controlado remotamente", "receiverStopped": "O receptor parou · reiniciando…",
   "portalRemoteSize": "Resolução do outro computador", "portalRemote": "Outro PC", "portalDrag": "Arraste para posicionar a tela do outro computador. Setas ajustam a posição.",
   "senderTitle": "Controlar outro computador", "senderConnect": "Conectar pelo portal", "senderActive": "No outro computador · volte pela borda ou use Ctrl+Shift+Q", "inputDevicesUnavailable": "Sem acesso ao mouse e teclado. Adicione seu usuário ao grupo input.", "hyprlandUnavailable": "Hyprland indisponível nesta sessão.",
+  "senderMonitor": "Monitor do Linux", "thisComputerEyebrow": "Este computador",
   "remoteReconnecting": "Conexão perdida · reconectando…",
   "linuxSettingsIntro": "Controle o receptor deste Linux.",
   "audioLabel": "Áudio do Linux no Windows", "audioHelp": "Envia o som reproduzido no Linux para o Windows.", "audioFailed": "Não foi possível reproduzir o áudio remoto.",

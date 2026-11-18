@@ -1,17 +1,43 @@
-window, box.app-content { background: @gray_0; color: @gray_10; }
-box.app-content { padding: 28px; }
-label.app-title { font-size: 28px; font-weight: 600; }
-label.app-runes { color: @gray_7; font-family: "Noto Sans Runic", "Segoe UI Historic", serif; font-size: 13px; letter-spacing: 6px; margin-bottom: 14px; animation: surface 420ms ease-out; }
-label.rune-band { color: @gray_3; font-family: "Noto Sans Runic", "Segoe UI Historic", serif; font-size: 12px; letter-spacing: 5px; padding: 5px 0; margin-bottom: 18px; border-top: 1px solid @gray_3; border-bottom: 1px solid @gray_3; animation: surface 600ms ease-out; }
-label.card-heading { font-weight: 600; margin-bottom: 4px; }
-@keyframes surface { from { opacity: 0; } to { opacity: 1; } }
-box.card { background: @gray_1; border: 1px solid @gray_3; padding: 18px; margin-bottom: 12px; }
-label.device-id { font-size: 32px; font-weight: 700; letter-spacing: 2px; }
-label.status { color: @gray_7; margin-top: 10px; }
-box.setting-row { padding-top: 13px; padding-bottom: 13px; border-bottom: 1px solid @gray_3; }
-button { background: @gray_2; color: @gray_9; border: 1px solid @gray_3; border-radius: 0; box-shadow: none; padding: 8px 14px; }
-button.primary { background: @gray_10; color: @gray_0; border-color: @gray_10; }
-button:focus-visible, switch:focus-visible { outline: 2px solid @gray_10; outline-offset: 2px; }
-switch { background: @gray_3; border-radius: 0; box-shadow: none; }
+/* Flat, grayscale, Windows Modern UI tiles; the same layout as the Windows app. */
+* { border-radius: 0; box-shadow: none; text-shadow: none; -gtk-icon-shadow: none; -gtk-outline-radius: 0; }
+window, box.app-content, scrolledwindow, viewport, stack { background: @gray_0; color: @gray_10; }
+
+box.topbar { min-height: 72px; padding: 0 48px; border-bottom: 1px solid @gray_3; background: @gray_0; }
+label.brand-mark { min-width: 36px; min-height: 36px; color: @gray_0; background: @gray_10; font-family: "Noto Sans Runic", "Segoe UI Historic", serif; font-size: 28px; font-weight: 700; }
+label.brand-word { font-size: 13px; font-weight: 700; letter-spacing: 2px; }
+label.brand-runes { color: @gray_6; font-family: "Noto Sans Runic", "Segoe UI Historic", serif; font-size: 10px; letter-spacing: 4px; animation: surface 420ms ease-out; }
+button.nav-button { min-height: 70px; padding: 0 2px; border: 0; border-bottom: 2px solid @gray_0; color: @gray_7; background: @gray_0; font-size: 13px; transition: color 160ms ease-out; }
+button.nav-button:hover { color: @gray_9; background: @gray_0; }
+button.nav-button.active { color: @gray_10; border-bottom-color: @gray_10; }
+label.rune-band { padding: 5px 48px; border-bottom: 1px solid @gray_3; color: @gray_5; background: @gray_0; font-family: "Noto Sans Runic", "Segoe UI Historic", serif; font-size: 12px; letter-spacing: 5px; animation: surface 600ms ease-out; }
+
+box.page { padding: 40px 48px 32px; }
+label.eyebrow { margin-bottom: 4px; color: @gray_7; font-size: 10px; font-weight: 700; letter-spacing: 2px; }
+label.page-title { margin-bottom: 18px; font-size: 30px; font-weight: 600; }
+label.tile-title { margin-bottom: 14px; font-size: 22px; font-weight: 600; }
+box.card { padding: 28px; border: 1px solid @gray_3; background: @gray_1; }
+label.field-label { margin-top: 6px; color: @gray_9; font-size: 12px; font-weight: 600; }
+label.device-id { font-family: monospace; font-size: 36px; font-weight: 700; letter-spacing: 3px; }
+label.fingerprint { color: @gray_7; font-family: monospace; font-size: 11px; }
+box.request { margin-top: 12px; padding-top: 14px; border-top: 1px solid @gray_3; }
+label.card-heading { font-weight: 600; }
+label.status { margin-top: 8px; color: @gray_7; }
+box.setting-row { padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid @gray_3; }
+
+entry { min-height: 44px; padding: 0 14px; border: 1px solid @gray_5; color: @gray_10; background: @gray_0; caret-color: @gray_10; }
+entry.pair-id { font-family: monospace; font-size: 18px; letter-spacing: 2px; }
+entry:focus { border-color: @gray_10; }
+button { min-height: 40px; padding: 0 16px; border: 1px solid @gray_5; color: @gray_9; background: @gray_2; font-weight: 600; }
+button:hover { background: @gray_3; }
+button.primary { color: @gray_0; background: @gray_10; border-color: @gray_10; }
+button.primary:hover { background: @gray_9; }
+button:focus-visible, switch:focus-visible, entry:focus-visible { outline: 2px solid @gray_10; outline-offset: 2px; }
+combobox button { min-height: 44px; color: @gray_9; background: @gray_2; border-color: @gray_5; font-weight: 400; }
+menu, .menu, popover { color: @gray_9; background: @gray_1; border: 1px solid @gray_3; }
+menuitem:hover { background: @gray_3; }
+switch { border: 1px solid @gray_5; background: @gray_3; }
 switch:checked { background: @gray_7; }
-switch slider { background: @gray_9; border-radius: 0; box-shadow: none; }
+switch slider { min-width: 18px; min-height: 18px; border: 0; background: @gray_9; }
+scrollbar slider { background: @gray_5; }
+
+@keyframes surface { from { opacity: 0; } to { opacity: 1; } }

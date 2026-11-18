@@ -17,6 +17,7 @@ use std::{
 };
 
 use gtk::prelude::*;
+use hlidskjalf_input_linux::hyprland::Monitor;
 use serde_json::{json, Value};
 
 use crate::linux_native::{label, setting_enabled, setting_path, state_dir};
@@ -216,35 +217,178 @@ fn pair(id: String, updates: Sender<Update>) {
     });
 }
 
-/// Adds the "control another computer" card to the Linux window.
-pub(super) fn build(content: &gtk::Box, locale: &Value) {
-    let card = gtk::Box::new(gtk::Orientation::Vertical, 8);
-    card.style_context().add_class("card");
-    let heading = crate::linux_native::rune_heading("ᚱ", &label(locale, "senderTitle"));
-    heading.set_xalign(0.0);
-    card.pack_start(&heading, false, false, 0);
+fn field_label(text: &str) -> gtk::Label {
+    let label = gtk::Label::new(Some(text));
+    label.style_context().add_class("field-label");
+    label.set_xalign(0.0);
+    label
+}
 
-    let pair_row = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+/// Sizes the other computer like the chosen monitor, at 16:9, next to the chosen edge.
+fn remote_rect(monitor: &Monitor, side: &str) -> (f64, f64, f64, f64) {
+    let (width, height) = monitor.logical_size();
+    let (x, y, w, h) = (
+        f64::from(monitor.x),
+        f64::from(monitor.y),
+        f64::from(width),
+        f64::from(height),
+    );
+    let (rw, rh) = (h * 16.0 / 9.0, h);
+    match side {
+        "Left" => (x - rw, y, rw, rh),
+        "Top" => (x + (w - rw) / 2.0, y - rh, rw, rh),
+        "Bottom" => (x + (w - rw) / 2.0, y + h, rw, rh),
+        _ => (x + w, y, rw, rh),
+    }
+}
+
+fn color(widget: &gtk::DrawingArea, name: &str) -> gtk::gdk::RGBA {
+    widget
+        .style_context()
+        .lookup_color(name)
+        .unwrap_or_else(|| widget.style_context().color(gtk::StateFlags::NORMAL))
+}
+
+/// Draws the Hyprland monitors and where the other computer sits, like the Windows editor.
+fn draw_layout(
+    area: &gtk::DrawingArea,
+    cr: &gtk::cairo::Context,
+    monitors: &[Monitor],
+    selected: Option<&str>,
+    side: &str,
+    remote_label: &str,
+) -> Result<(), gtk::cairo::Error> {
+    let Some(chosen) = monitors
+        .iter()
+        .find(|monitor| Some(monitor.name.as_str()) == selected)
+        .or_else(|| monitors.first())
+    else {
+        return Ok(());
+    };
+    let remote = remote_rect(chosen, side);
+    let mut boxes: Vec<(f64, f64, f64, f64)> = monitors
+        .iter()
+        .map(|monitor| {
+            let (w, h) = monitor.logical_size();
+            (
+                f64::from(monitor.x),
+                f64::from(monitor.y),
+                f64::from(w),
+                f64::from(h),
+            )
+        })
+        .collect();
+    boxes.push(remote);
+    let left = boxes.iter().map(|b| b.0).fold(f64::MAX, f64::min);
+    let top = boxes.iter().map(|b| b.1).fold(f64::MAX, f64::min);
+    let right = boxes.iter().map(|b| b.0 + b.2).fold(f64::MIN, f64::max);
+    let bottom = boxes.iter().map(|b| b.1 + b.3).fold(f64::MIN, f64::max);
+    let (width, height) = (
+        f64::from(area.allocated_width()),
+        f64::from(area.allocated_height()),
+    );
+    let padding = 24.0;
+    let scale = ((width - padding * 2.0) / (right - left))
+        .min((height - padding * 2.0) / (bottom - top))
+        .max(0.0001);
+    let offset_x = (width - (right - left) * scale) / 2.0;
+    let offset_y = (height - (bottom - top) * scale) / 2.0;
+    let map = |(x, y, w, h): (f64, f64, f64, f64)| {
+        (
+            offset_x + (x - left) * scale,
+            offset_y + (y - top) * scale,
+            w * scale,
+            h * scale,
+        )
+    };
+    let set = |rgba: gtk::gdk::RGBA| {
+        cr.set_source_rgba(rgba.red(), rgba.green(), rgba.blue(), rgba.alpha())
+    };
+    let label_at = |text: &str, (x, y, w, h): (f64, f64, f64, f64), size: f64| {
+        cr.set_font_size(size);
+        if let Ok(extents) = cr.text_extents(text) {
+            cr.move_to(
+                x + (w - extents.width()) / 2.0 - extents.x_bearing(),
+                y + (h - extents.height()) / 2.0 - extents.y_bearing(),
+            );
+            let _ = cr.show_text(text);
+        }
+    };
+    cr.select_font_face(
+        "sans-serif",
+        gtk::cairo::FontSlant::Normal,
+        gtk::cairo::FontWeight::Bold,
+    );
+    for (index, monitor) in monitors.iter().enumerate() {
+        let rect = map(boxes[index]);
+        set(color(area, "gray_2"));
+        cr.rectangle(rect.0, rect.1, rect.2, rect.3);
+        cr.fill()?;
+        set(color(
+            area,
+            if monitor.name == chosen.name {
+                "gray_10"
+            } else {
+                "gray_7"
+            },
+        ));
+        cr.set_line_width(2.0);
+        cr.rectangle(rect.0 + 1.0, rect.1 + 1.0, rect.2 - 2.0, rect.3 - 2.0);
+        cr.stroke()?;
+        label_at(&monitor.name, rect, 13.0);
+    }
+    let rect = map(remote);
+    set(color(area, "gray_1"));
+    cr.rectangle(rect.0, rect.1, rect.2, rect.3);
+    cr.fill()?;
+    set(color(area, "gray_6"));
+    cr.set_line_width(2.0);
+    cr.rectangle(rect.0 + 1.0, rect.1 + 1.0, rect.2 - 2.0, rect.3 - 2.0);
+    cr.stroke()?;
+    set(color(area, "gray_9"));
+    label_at(remote_label, rect, 13.0);
+    // The portal: the shared edge, drawn as a solid bar.
+    let edge = map(match side {
+        "Left" => (remote.0 + remote.2, remote.1, 0.0, remote.3),
+        "Top" => (remote.0, remote.1 + remote.3, remote.2, 0.0),
+        "Bottom" => (remote.0, remote.1, remote.2, 0.0),
+        _ => (remote.0, remote.1, 0.0, remote.3),
+    });
+    set(color(area, "gray_10"));
+    cr.rectangle(
+        edge.0 - 2.0,
+        edge.1 - 2.0,
+        edge.2.max(0.0) + 4.0,
+        edge.3.max(0.0) + 4.0,
+    );
+    cr.fill()
+}
+
+/// Fills the pairing tile on the home page and the portal page.
+pub(super) fn build(home: &gtk::Box, portals: &gtk::Box, locale: &Value) {
+    let card = home;
+    card.pack_start(&field_label(&label(locale, "pairIdLabel")), false, false, 0);
+    let pair_row = gtk::Box::new(gtk::Orientation::Horizontal, 10);
     let id_entry = gtk::Entry::new();
     id_entry.set_placeholder_text(Some("AB 123456"));
     id_entry.set_max_length(9);
     id_entry.set_hexpand(true);
+    id_entry.style_context().add_class("pair-id");
     let pair_button = gtk::Button::with_label(&label(locale, "pairById"));
+    pair_button.style_context().add_class("primary");
     pair_row.pack_start(&id_entry, true, true, 0);
     pair_row.pack_start(&pair_button, false, false, 0);
     card.pack_start(&pair_row, false, false, 0);
 
     let config = load_config();
-    let layout_row = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    let monitors: Vec<Monitor> = hlidskjalf_input_linux::hyprland::monitors().unwrap_or_default();
     let monitor = gtk::ComboBoxText::new();
-    if let Ok(monitors) = hlidskjalf_input_linux::hyprland::monitors() {
-        for item in monitors {
-            let (width, height) = item.logical_size();
-            monitor.append(
-                Some(&item.name),
-                &format!("{} ({width}×{height})", item.name),
-            );
-        }
+    for item in &monitors {
+        let (width, height) = item.logical_size();
+        monitor.append(
+            Some(&item.name),
+            &format!("{} ({width}×{height})", item.name),
+        );
     }
     let saved_monitor = config.get("monitor").and_then(Value::as_str);
     if !saved_monitor.is_some_and(|name| monitor.set_active_id(Some(name))) {
@@ -259,9 +403,45 @@ pub(super) fn build(content: &gtk::Box, locale: &Value) {
         .and_then(Value::as_str)
         .unwrap_or("Right");
     side.set_active_id(Some(saved_side));
-    layout_row.pack_start(&monitor, true, true, 0);
-    layout_row.pack_start(&side, true, true, 0);
-    card.pack_start(&layout_row, false, false, 0);
+
+    let editor = gtk::Box::new(gtk::Orientation::Horizontal, 24);
+    editor.style_context().add_class("card");
+    let fields = gtk::Box::new(gtk::Orientation::Vertical, 8);
+    fields.set_size_request(260, -1);
+    fields.pack_start(
+        &field_label(&label(locale, "senderMonitor")),
+        false,
+        false,
+        0,
+    );
+    fields.pack_start(&monitor, false, false, 0);
+    fields.pack_start(&field_label(&label(locale, "portalSide")), false, false, 0);
+    fields.pack_start(&side, false, false, 0);
+    let preview = gtk::DrawingArea::new();
+    preview.style_context().add_class("portal-preview");
+    preview.set_hexpand(true);
+    preview.set_size_request(-1, 300);
+    editor.pack_start(&fields, false, false, 0);
+    editor.pack_start(&preview, true, true, 0);
+    portals.pack_start(&editor, false, false, 0);
+    {
+        let monitor = monitor.clone();
+        let side = side.clone();
+        let remote_label = label(locale, "portalRemote");
+        preview.connect_draw(move |area, cr| {
+            let chosen = monitor.active_id();
+            let edge = side.active_id();
+            let _ = draw_layout(
+                area,
+                cr,
+                &monitors,
+                chosen.as_deref(),
+                edge.as_deref().unwrap_or("Right"),
+                &remote_label,
+            );
+            gtk::glib::Propagation::Stop
+        });
+    }
 
     let connect_row = gtk::Box::new(gtk::Orientation::Horizontal, 12);
     connect_row.style_context().add_class("setting-row");
@@ -279,8 +459,7 @@ pub(super) fn build(content: &gtk::Box, locale: &Value) {
     status.set_xalign(0.0);
     status.set_line_wrap(true);
     card.pack_start(&status, false, false, 0);
-    content.pack_start(&card, false, false, 0);
-
+    let content = card;
     let paired = sender_dir().is_some_and(|dir| dir.join("peer.der").exists())
         && config.get("address").and_then(Value::as_str).is_some();
     toggle.set_sensitive(paired);
@@ -308,20 +487,24 @@ pub(super) fn build(content: &gtk::Box, locale: &Value) {
     }
     {
         let supervisor = Arc::clone(&supervisor);
+        let preview = preview.clone();
         monitor.connect_changed(move |combo| {
             if let Some(id) = combo.active_id() {
                 update_config("monitor", json!(id.as_str()));
                 supervisor.restart();
             }
+            preview.queue_draw();
         });
     }
     {
         let supervisor = Arc::clone(&supervisor);
+        let preview = preview.clone();
         side.connect_changed(move |combo| {
             if let Some(id) = combo.active_id() {
                 update_config("side", json!(id.as_str()));
                 supervisor.restart();
             }
+            preview.queue_draw();
         });
     }
     {
