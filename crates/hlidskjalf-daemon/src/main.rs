@@ -167,6 +167,8 @@ async fn run_input_server(
     let _ = &files_for_events;
     let (reload_tx, mut reload_rx) = tokio::sync::mpsc::channel(2);
     let server = async {
+        // After a new pairing the previous listener may hold the port for a moment.
+        let mut failures = 0_u32;
         loop {
             if !peer_certificate.exists() {
                 if reload_rx.recv().await.is_none() {
@@ -175,10 +177,19 @@ async fn run_input_server(
                 continue;
             }
             tokio::select! {
-                result = hlidskjalf_net::serve_with_media(bind, identity, peer_certificate, directory.clone(), sender.clone(), returns.clone(), clipboard_out.clone(), audio_out.clone()) => break result,
+                result = hlidskjalf_net::serve_with_media(bind, identity, peer_certificate, directory.clone(), sender.clone(), returns.clone(), clipboard_out.clone(), audio_out.clone()) => {
+                    let Err(error) = result else { break Ok(()) };
+                    failures += 1;
+                    if failures >= 20 {
+                        break Err(error);
+                    }
+                    tracing::warn!(%error, "input listener stopped; retrying");
+                    tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+                }
                 updated = reload_rx.recv() => {
                     if updated.is_none() { anyhow::bail!("pairing listener stopped"); }
                     let _ = sender.try_send(Message::LeaveScreen);
+                    failures = 0;
                 }
             }
         }
