@@ -1,0 +1,14 @@
+[package]
+name = "hlidskjalf-input"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+hlidskjalf-proto = { path = "../hlidskjalf-proto" }
+
+[lints]
+workspace = true

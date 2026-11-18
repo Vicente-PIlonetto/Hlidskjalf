@@ -1,17 +1,17 @@
 [workspace]
 resolver = "2"
 members = [
-  "crates/vortal-proto",
-  "crates/vortal-core",
-  "crates/vortal-net",
-  "crates/vortal-vylink",
-  "crates/vortal-input",
-  "crates/vortal-input-windows",
-  "crates/vortal-input-linux",
-  "crates/vortal-daemon",
-  "crates/vortal-cli",
-  "crates/vortal-ui",
-  "crates/vortal-desktop",
+  "crates/hlidskjalf-proto",
+  "crates/hlidskjalf-core",
+  "crates/hlidskjalf-net",
+  "crates/hlidskjalf-vylink",
+  "crates/hlidskjalf-input",
+  "crates/hlidskjalf-input-windows",
+  "crates/hlidskjalf-input-linux",
+  "crates/hlidskjalf-daemon",
+  "crates/hlidskjalf-cli",
+  "crates/hlidskjalf-ui",
+  "crates/hlidskjalf-desktop",
 ]
 
 [workspace.package]

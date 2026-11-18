@@ -1,0 +1,39 @@
+[package]
+name = "hlidskjalf-daemon"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "hlidskjalfd"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+tokio = { workspace = true, features = ["process", "io-util", "fs"] }
+tracing.workspace = true
+hlidskjalf-net = { path = "../hlidskjalf-net" }
+hlidskjalf-input = { path = "../hlidskjalf-input" }
+hlidskjalf-proto = { path = "../hlidskjalf-proto" }
+serde.workspace = true
+serde_json.workspace = true
+sha2 = "0.10"
+base64 = "0.22"
+getrandom = "0.4"
+url = "2.5"
+hlidskjalf-vylink = { path = "../hlidskjalf-vylink" }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3.6", default-features = false, features = ["sync-secret-service"] }
+hlidskjalf-input-linux = { path = "../hlidskjalf-input-linux" }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "3.6", default-features = false, features = ["windows-native"] }
+hlidskjalf-input-windows = { path = "../hlidskjalf-input-windows" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3.6", default-features = false, features = ["apple-native"] }
+
+[lints]
+workspace = true

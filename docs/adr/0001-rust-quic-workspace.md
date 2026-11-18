@@ -5,7 +5,7 @@
 
 ## Context
 
-Vortal needs low-latency input transport across Windows and Linux/Wayland, strict recovery of local input on failure, and a path to additional platform backends. The project must also keep protocol definitions testable without hardware or I/O.
+Hliðskjálf needs low-latency input transport across Windows and Linux/Wayland, strict recovery of local input on failure, and a path to additional platform backends. The project must also keep protocol definitions testable without hardware or I/O.
 
 ## Decision
 
