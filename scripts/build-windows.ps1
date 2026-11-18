@@ -18,7 +18,9 @@ try {
         }
         if (-not $nsis) { throw "NSIS is required to build the Windows installer." }
         New-Item -ItemType Directory -Force -Path (Join-Path $repoRoot "dist\windows-native") | Out-Null
-        & $nsis installers\windows\Hlidskjalf.nsi
+        $version = (Select-String -Path (Join-Path $repoRoot "Cargo.toml") -Pattern '^version = "([^"]+)"' | Select-Object -First 1).Matches[0].Groups[1].Value
+        if (-not $version) { throw "Could not read the workspace version from Cargo.toml." }
+        & $nsis "/DVERSION=$version" installers\windows\Hlidskjalf.nsi
         if ($LASTEXITCODE -ne 0) { throw "NSIS packaging failed with exit code $LASTEXITCODE" }
         Write-Host "Rust installer generated at dist\windows-native\Hlidskjalf-Setup-Rust-x64.exe"
     }

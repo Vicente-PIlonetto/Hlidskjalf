@@ -1,4 +1,7 @@
 Unicode true
+!ifndef VERSION
+  !define VERSION "0.1.0"
+!endif
 Name "Hliðskjálf"
 Caption "Instalador do Hliðskjálf"
 OutFile "../../dist/windows-native/Hlidskjalf-Setup-Rust-x64.exe"
@@ -7,11 +10,11 @@ RequestExecutionLevel user
 SetCompressor /SOLID lzma
 Icon "..\..\crates\hlidskjalf-desktop\assets\hlidskjalf.ico"
 UninstallIcon "..\..\crates\hlidskjalf-desktop\assets\hlidskjalf.ico"
-VIProductVersion "0.1.0.0"
+VIProductVersion "${VERSION}.0"
 VIAddVersionKey "ProductName" "Hliðskjálf"
 VIAddVersionKey "FileDescription" "Hliðskjálf desktop app"
-VIAddVersionKey "ProductVersion" "0.1.0"
-VIAddVersionKey "FileVersion" "0.1.0"
+VIAddVersionKey "ProductVersion" "${VERSION}"
+VIAddVersionKey "FileVersion" "${VERSION}"
 VIAddVersionKey "LegalCopyright" "Hliðskjálf contributors"
 
 Page directory
@@ -53,7 +56,7 @@ legacy_done:
 startup_done:
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Hlidskjalf" "DisplayName" "Hliðskjálf"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Hlidskjalf" "DisplayVersion" "0.1.0"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Hlidskjalf" "DisplayVersion" "${VERSION}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Hlidskjalf" "UninstallString" '"$INSTDIR\Uninstall.exe"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Hlidskjalf" "DisplayIcon" "$INSTDIR\hlidskjalf.ico"
 SectionEnd

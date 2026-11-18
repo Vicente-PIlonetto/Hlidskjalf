@@ -41,7 +41,7 @@ Você precisa de um **Windows x64** e de um **Linux com Wayland** na mesma rede.
 2. **No Windows:** instale e abra o Hliðskjálf. Digite o ID do Linux e clique em **Parear**.
 3. **No Linux:** confira o pedido e clique em **Permitir**. Depois, no Windows, abra **Portais** e escolha o monitor e a borda.
 
-O instalador Windows é gerado em `dist/windows-native/Hlidskjalf-Setup-Rust-x64.exe`. Como ele ainda não é distribuído pelo GitHub Releases, quem clonar o projeto pode gerá-lo com `scripts\build-windows.bat`. O script precisa de Rust, Visual Studio C++ Build Tools e NSIS. Para instalar no Linux, o script usa Rust e as bibliotecas GTK de desenvolvimento. Veja o [guia de instalação](installers/windows/README.md) para os requisitos completos e o pareamento manual.
+Baixe o instalador Windows (`Hlidskjalf-Setup-<versão>-x64.exe`) e o pacote Linux (`hlidskjalf-<versão>-linux-x86_64.tar.gz`) em [Releases](https://github.com/Vicente-PIlonetto/Hlidskjalf/releases). No Linux, extraia o pacote e rode `./scripts/install.sh`. Para gerar a partir do código, use `scripts\build-windows.bat` no Windows (requer Rust, Visual Studio C++ Build Tools e NSIS) ou `./scripts/install.sh` no Linux (requer Rust e as bibliotecas GTK de desenvolvimento). Veja o [guia de instalação](installers/windows/README.md) para os requisitos completos e o pareamento manual.
 
 ## Estado do projeto
 

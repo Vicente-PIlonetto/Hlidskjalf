@@ -10,7 +10,10 @@ service_dir="${HOME}/.config/systemd/user"
 
 config_dir="${XDG_CONFIG_HOME:-${HOME}/.config}"
 
-"${repo_root}/scripts/build.sh"
+# A source checkout is built first; a release archive already ships target/release.
+if [[ -f "${repo_root}/Cargo.toml" ]]; then
+  "${repo_root}/scripts/build.sh"
+fi
 
 # Upgrade from the project's former name, Vortal: keep identity, pairing, and settings.
 if command -v systemctl >/dev/null 2>&1 && [[ -f "${service_dir}/vortal-input.service" ]]; then
