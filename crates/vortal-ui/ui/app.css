@@ -95,13 +95,14 @@ h1 { margin-bottom: 8px; font-size: clamp(28px, 3vw, 38px); line-height: 1.2; fo
 .portal-fields { display: grid; align-content: start; gap: 8px; }
 .portal-fields label { margin-top: 8px; color: var(--gray-8); font-size: 12px; font-weight: 600; }
 .portal-fields select { min-height: 44px; padding: 0 10px; border: 1px solid var(--gray-4); background: var(--gray-2); }
-.portal-preview { display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 260px; border: 1px solid var(--gray-3); background: var(--gray-2); }
-.portal-screen { position: relative; display: grid; width: 170px; height: 110px; place-items: center; border: 2px solid var(--gray-9); color: var(--gray-9); font-weight: 600; }
-.portal-linux { border-color: var(--gray-5); color: var(--gray-7); }
-.portal-marker { position: absolute; right: -5px; top: 25%; width: 7px; height: 50%; background: var(--gray-10); }
-.portal-preview[data-side="Left"] .portal-marker { left: -5px; right: auto; }
-.portal-preview[data-side="Top"] .portal-marker { left: 25%; right: auto; top: -5px; width: 50%; height: 7px; }
-.portal-preview[data-side="Bottom"] .portal-marker { left: 25%; right: auto; top: auto; bottom: -5px; width: 50%; height: 7px; }
+.portal-fields-label { margin-top: 8px; color: var(--gray-8); font-size: 12px; font-weight: 600; }
+.portal-layout { position: relative; min-height: 300px; overflow: hidden; border: 1px solid var(--gray-3); background: var(--gray-2); touch-action: none; user-select: none; }
+.portal-display { position: absolute; top: 0; left: 0; display: grid; overflow: hidden; place-items: center; border: 2px solid var(--gray-9); background: var(--gray-3); color: var(--gray-9); font-size: 13px; font-weight: 600; line-height: 1.2; text-align: center; }
+.portal-display small { display: block; color: var(--gray-7); font-size: 11px; font-weight: 400; }
+.portal-remote { z-index: 2; border-color: var(--gray-6); background: var(--gray-1); color: var(--gray-8); cursor: grab; }
+.portal-remote.is-dragging { z-index: 3; cursor: grabbing; opacity: .85; }
+.portal-remote:focus-visible { outline: 2px solid var(--gray-10); outline-offset: 2px; }
+.portal-marker { position: absolute; top: 0; left: 0; z-index: 1; background: var(--gray-10); }
 .input-settings-panel { display: grid; gap: 0; width: min(660px, 100%); margin: 28px 0 18px; padding: 8px 24px; border: 1px solid var(--gray-3); background: var(--gray-1); }
 .input-setting { display: grid; gap: 10px; padding: 22px 0; border-bottom: 1px solid var(--gray-3); }
 .input-setting:last-of-type { border-bottom: 0; }
@@ -205,7 +206,7 @@ footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 
   .input-row { flex-direction: column; }
   .input-row .button { width: 100%; }
   .portal-editor { grid-template-columns: 1fr; padding: 16px; }
-  .portal-screen { width: 120px; height: 82px; }
+  .portal-layout { min-height: 220px; }
   .input-settings-panel { padding: 4px 16px; }
 }
 

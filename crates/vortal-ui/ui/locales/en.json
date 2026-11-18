@@ -1,6 +1,7 @@
 {
   "trayOpen": "Open Vortal", "trayQuit": "Quit Vortal",
   "receiverLabel": "Allow control of this PC", "receiverHelp": "Another Windows PC controls this one by ID.", "receiverId": "This PC's ID", "receiverOff": "Off", "receiverStarting": "Starting…", "receiverWaiting": "Waiting for pairing", "receiverReady": "Ready to receive", "receiverControlled": "Remotely controlled", "receiverStopped": "Receiver stopped · restarting…",
+  "portalRemoteSize": "Other computer's resolution", "portalRemote": "Other PC", "portalDrag": "Drag to position the other computer's screen. Arrow keys adjust it.",
   "remoteReconnecting": "Connection lost · reconnecting…",
   "linuxSettingsIntro": "Control this Linux receiver.",
   "audioLabel": "Linux audio on Windows", "audioHelp": "Sends sound playing on Linux to Windows.", "audioFailed": "Could not play remote audio.",

@@ -33,6 +33,7 @@ let audioContext = null;
 let nextAudioTime = 0;
 const heldKeys = new Set();
 const heldButtons = new Set();
+let portalEditor = null;
 
 function desktopError(error) {
   return locale[String(error?.message || "")] || "";
@@ -163,8 +164,9 @@ async function setLanguage(language) {
   renderMode();
   renderPeers();
   renderRemoteStatus();
-  if (window.vortalDesktop && document.querySelector("#portal-monitor").options.length) {
+  if (window.vortalDesktop && portalEditor) {
     document.querySelector("#portal-status").textContent = locale[edgeIsActive ? "portalActive" : "portalSaved"];
+    portalEditor.render();
   }
 }
 
@@ -386,32 +388,194 @@ async function applyInputSettings() {
   }
 }
 
+const remoteSizes = ["1280x720", "1366x768", "1600x900", "1920x1080", "1920x1200", "2560x1080", "2560x1440", "2560x1600", "3440x1440", "3840x2160"];
+const portalSides = ["Left", "Right", "Top", "Bottom"];
+
+function overlaps(a, b) {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
+/** Snaps the remote screen to the nearest free edge of a Windows monitor, as Windows display settings does. */
+function snapRemote(displays, point, width, height) {
+  let best = null;
+  for (const display of displays) {
+    const minimum = Math.min(64, Math.floor(Math.min(width, height, display.width, display.height) / 4));
+    for (const side of portalSides) {
+      const vertical = side === "Left" || side === "Right";
+      const candidate = { width, height, display, side };
+      if (vertical) {
+        candidate.x = side === "Right" ? display.x + display.width : display.x - width;
+        candidate.y = Math.round(Math.min(Math.max(point.y, display.y - height + minimum), display.y + display.height - minimum));
+      } else {
+        candidate.y = side === "Bottom" ? display.y + display.height : display.y - height;
+        candidate.x = Math.round(Math.min(Math.max(point.x, display.x - width + minimum), display.x + display.width - minimum));
+      }
+      if (displays.some((other) => overlaps(candidate, other))) continue;
+      candidate.distance = (candidate.x - point.x) ** 2 + (candidate.y - point.y) ** 2;
+      if (!best || candidate.distance < best.distance) best = candidate;
+    }
+  }
+  if (!best) return null;
+  const vertical = best.side === "Left" || best.side === "Right";
+  best.start = vertical ? best.y - best.display.y : best.x - best.display.x;
+  best.length = vertical ? height : width;
+  return best;
+}
+
+function legacyRemotePoint(displays, saved, width, height) {
+  const display = displays.find((item) => item.id === saved.displayId) || displays[0];
+  const side = portalSides.includes(saved.side) ? saved.side : "Right";
+  const centerY = display.y + (display.height - height) / 2;
+  const centerX = display.x + (display.width - width) / 2;
+  if (side === "Left") return { x: display.x - width, y: centerY };
+  if (side === "Top") return { x: centerX, y: display.y - height };
+  if (side === "Bottom") return { x: centerX, y: display.y + display.height };
+  return { x: display.x + display.width, y: centerY };
+}
+
 async function setupPortalEditor() {
   const displays = await window.vortalDesktop.displays();
-  const monitor = document.querySelector("#portal-monitor");
-  const side = document.querySelector("#portal-side");
-  monitor.replaceChildren(...displays.map((display, index) => {
-    const option = document.createElement("option");
-    option.value = display.id;
-    option.textContent = `${index + 1} · ${display.label} (${display.width}×${display.height})`;
-    return option;
-  }));
+  if (!displays.length) return;
+  const layout = document.querySelector("#portal-layout");
+  const remoteElement = document.querySelector("#portal-remote");
+  const marker = document.querySelector("#portal-marker");
+  const sizeSelect = document.querySelector("#portal-remote-size");
   const saved = settings.portal || {};
-  monitor.value = displays.some((display) => display.id === saved.displayId)
-    ? saved.displayId : displays[0]?.id || "";
-  side.value = ["Left", "Right", "Top", "Bottom"].includes(saved.side) ? saved.side : "Right";
-  const savePortal = async () => {
-    if (!monitor.value) return;
-    const portal = { displayId: monitor.value, side: side.value };
-    await window.vortalDesktop.configureEdge(portal);
-    settings.portal = portal;
-    saveSettings();
-    document.querySelector(".portal-preview").dataset.side = portal.side;
-    document.querySelector("#portal-status").textContent = locale.portalSaved;
+  let size = remoteSizes.includes(saved.remoteSize) ? saved.remoteSize : "1920x1080";
+  sizeSelect.value = size;
+  const dimensions = () => size.split("x").map(Number);
+  let [width, height] = dimensions();
+  let placement = snapRemote(displays,
+    Number.isFinite(saved.remoteX) && Number.isFinite(saved.remoteY) ? { x: saved.remoteX, y: saved.remoteY } : legacyRemotePoint(displays, saved, width, height),
+    width, height);
+  let view = null;
+  let drag = null;
+
+  const localElements = displays.map((display, index) => {
+    const element = document.createElement("div");
+    element.className = "portal-display";
+    element.title = display.label;
+    element.append(String(index + 1));
+    const detail = document.createElement("small");
+    detail.textContent = `${display.width}×${display.height}`;
+    element.append(detail);
+    layout.insertBefore(element, marker);
+    return element;
+  });
+
+  const computeView = () => {
+    const boxes = [...displays, placement].filter(Boolean);
+    const left = Math.min(...boxes.map((box) => box.x));
+    const top = Math.min(...boxes.map((box) => box.y));
+    const right = Math.max(...boxes.map((box) => box.x + box.width));
+    const bottom = Math.max(...boxes.map((box) => box.y + box.height));
+    const padding = Math.max(width, height) * 0.35;
+    const spanX = right - left + padding * 2;
+    const spanY = bottom - top + padding * 2;
+    const scale = Math.min(layout.clientWidth / spanX, layout.clientHeight / spanY);
+    return {
+      scale,
+      originX: left - padding - (layout.clientWidth / scale - spanX) / 2,
+      originY: top - padding - (layout.clientHeight / scale - spanY) / 2,
+    };
   };
-  monitor.addEventListener("change", () => { void savePortal().catch((error) => setRemoteStatus("remoteSetupError", desktopError(error))); });
-  side.addEventListener("change", () => { void savePortal().catch((error) => setRemoteStatus("remoteSetupError", desktopError(error))); });
-  await savePortal();
+  const place = (element, box) => {
+    element.style.width = `${Math.max(2, box.width * view.scale)}px`;
+    element.style.height = `${Math.max(2, box.height * view.scale)}px`;
+    element.style.transform = `translate(${(box.x - view.originX) * view.scale}px, ${(box.y - view.originY) * view.scale}px)`;
+  };
+  const render = () => {
+    if (!layout.clientWidth || !layout.clientHeight) return;
+    if (!drag) view = computeView();
+    displays.forEach((display, index) => place(localElements[index], display));
+    if (drag) place(remoteElement, { ...drag.position, width, height });
+    else if (placement) place(remoteElement, placement);
+    marker.hidden = !placement || Boolean(drag);
+    if (placement && !drag) {
+      const { display, side, start, length } = placement;
+      const vertical = side === "Left" || side === "Right";
+      const from = Math.max(0, start);
+      const to = Math.min(vertical ? display.height : display.width, start + length);
+      const thickness = 4 / view.scale;
+      place(marker, vertical
+        ? { x: side === "Right" ? display.x + display.width - thickness / 2 : display.x - thickness / 2, y: display.y + from, width: thickness, height: to - from }
+        : { x: display.x + from, y: side === "Bottom" ? display.y + display.height - thickness / 2 : display.y - thickness / 2, width: to - from, height: thickness });
+    }
+    const index = placement ? displays.indexOf(placement.display) : -1;
+    document.querySelector("#portal-placement").textContent = placement
+      ? `${index + 1} · ${placement.display.label} · ${locale[`portal${placement.side}`] || placement.side}`
+      : "—";
+  };
+  const save = async () => {
+    if (!placement) return;
+    const portal = { displayId: placement.display.id, side: placement.side, start: placement.start, length: placement.length };
+    await window.vortalDesktop.configureEdge(portal);
+    settings.portal = { ...portal, remoteX: placement.x, remoteY: placement.y, remoteSize: size };
+    saveSettings();
+    document.querySelector("#portal-status").textContent = locale[edgeIsActive ? "portalActive" : "portalSaved"];
+  };
+  const commit = (point) => {
+    const next = snapRemote(displays, point, width, height);
+    if (next) placement = next;
+    render();
+    void save().catch((error) => setRemoteStatus("remoteSetupError", desktopError(error)));
+  };
+
+  remoteElement.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || !view) return;
+    event.preventDefault();
+    remoteElement.setPointerCapture(event.pointerId);
+    const bounds = layout.getBoundingClientRect();
+    const current = placement || { x: view.originX, y: view.originY };
+    drag = {
+      pointerId: event.pointerId,
+      offsetX: (event.clientX - bounds.left) / view.scale + view.originX - current.x,
+      offsetY: (event.clientY - bounds.top) / view.scale + view.originY - current.y,
+      position: { x: current.x, y: current.y },
+    };
+    remoteElement.classList.add("is-dragging");
+    render();
+  });
+  remoteElement.addEventListener("pointermove", (event) => {
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    const bounds = layout.getBoundingClientRect();
+    const x = Math.min(Math.max(event.clientX, bounds.left), bounds.right);
+    const y = Math.min(Math.max(event.clientY, bounds.top), bounds.bottom);
+    drag.position = {
+      x: (x - bounds.left) / view.scale + view.originX - drag.offsetX,
+      y: (y - bounds.top) / view.scale + view.originY - drag.offsetY,
+    };
+    render();
+  });
+  const endDrag = (event) => {
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    const point = drag.position;
+    drag = null;
+    remoteElement.classList.remove("is-dragging");
+    commit(point);
+  };
+  remoteElement.addEventListener("pointerup", endDrag);
+  remoteElement.addEventListener("pointercancel", endDrag);
+  remoteElement.addEventListener("keydown", (event) => {
+    const step = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
+    if (!step || !placement) return;
+    event.preventDefault();
+    const fine = Math.max(width, height) * (event.shiftKey ? 0.02 : 0.1);
+    let next = snapRemote(displays, { x: placement.x + step[0] * fine, y: placement.y + step[1] * fine }, width, height);
+    if (next && next.x === placement.x && next.y === placement.y) {
+      next = snapRemote(displays, { x: placement.x + step[0] * (width + fine), y: placement.y + step[1] * (height + fine) }, width, height) || next;
+    }
+    if (next) commit({ x: next.x, y: next.y });
+  });
+  sizeSelect.addEventListener("change", () => {
+    size = remoteSizes.includes(sizeSelect.value) ? sizeSelect.value : "1920x1080";
+    [width, height] = dimensions();
+    commit(placement ? { x: placement.x, y: placement.y } : legacyRemotePoint(displays, {}, width, height));
+  });
+  new ResizeObserver(() => render()).observe(layout);
+  portalEditor = { render };
+  render();
+  await save();
 }
 
 function releaseHeldInput() {

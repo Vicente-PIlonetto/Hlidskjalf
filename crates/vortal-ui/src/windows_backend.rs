@@ -171,7 +171,7 @@ impl Backend {
             "displays" => Ok(Value::Array(
                 self.displays
                     .iter()
-                    .map(|display| json!({"id":display.id,"label":display.label,"width":display.width,"height":display.height}))
+                    .map(|display| json!({"id":display.id,"label":display.label,"x":display.x,"y":display.y,"width":display.width,"height":display.height}))
                     .collect(),
             )),
             "configureEdge" => self.configure_edge(args),
@@ -555,11 +555,31 @@ impl Backend {
             .get("displayId")
             .and_then(Value::as_str)
             .unwrap_or("");
-        if !["Left", "Right", "Top", "Bottom"].contains(&side)
-            || !self.displays.iter().any(|display| display.id == display_id)
+        let Some(display) = self
+            .displays
+            .iter()
+            .find(|display| display.id == display_id)
+        else {
+            bail!("Invalid screen edge configuration");
+        };
+        if !["Left", "Right", "Top", "Bottom"].contains(&side) {
+            bail!("Invalid screen edge configuration");
+        }
+        let edge_length = edge_length(display, side);
+        let start = config.get("start").and_then(Value::as_i64).unwrap_or(0);
+        let length = config
+            .get("length")
+            .and_then(Value::as_i64)
+            .unwrap_or(edge_length);
+        if !(1..=100_000).contains(&length)
+            || !(-100_000..=100_000).contains(&start)
+            || start >= edge_length
+            || start + length <= 0
         {
             bail!("Invalid screen edge configuration");
         }
+        let config =
+            json!({"displayId": display_id, "side": side, "start": start, "length": length});
         self.state
             .lock()
             .map_err(|_| anyhow::anyhow!("state unavailable"))?
@@ -860,14 +880,20 @@ impl Backend {
                 "Top" => point.1 <= display.y + 1 && point.1 < old.1,
                 _ => false,
             };
-            if reached {
-                let along = if side == "Left" || side == "Right" {
-                    (point.1 - display.y) as f64
-                        / f64::from(display.height.saturating_sub(1).max(1))
-                } else {
-                    (point.0 - display.x) as f64 / f64::from(display.width.saturating_sub(1).max(1))
-                };
-                let position = (along * 65535.0).round().clamp(0.0, 65535.0) as u16;
+            let along = i64::from(if side == "Left" || side == "Right" {
+                point.1 - display.y
+            } else {
+                point.0 - display.x
+            });
+            let start = config.get("start").and_then(Value::as_i64).unwrap_or(0);
+            let length = config
+                .get("length")
+                .and_then(Value::as_i64)
+                .unwrap_or_else(|| edge_length(display, side))
+                .max(1);
+            if reached && along >= start && along < start + length {
+                let fraction = (along - start) as f64 / (length - 1).max(1) as f64;
+                let position = (fraction * 65535.0).round().clamp(0.0, 65535.0) as u16;
                 self.start_edge(side, position);
             }
         }
@@ -1010,6 +1036,15 @@ impl Backend {
         }
         self.notify("edgeState", Value::Bool(false));
     }
+}
+
+/// Pixel length of a display edge; positions along it start at the display's left or top.
+fn edge_length(display: &DisplayInfo, side: &str) -> i64 {
+    i64::from(if side == "Left" || side == "Right" {
+        display.height
+    } else {
+        display.width
+    })
 }
 
 fn inside(display: &DisplayInfo, point: (i32, i32)) -> bool {

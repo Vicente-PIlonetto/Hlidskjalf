@@ -118,20 +118,26 @@
             <p class="lead" data-i18n="portalIntro">Arraste o cursor pela borda escolhida para entrar no Linux.</p>
             <div class="portal-editor">
               <div class="portal-fields">
-                <label for="portal-monitor" data-i18n="portalMonitor">Monitor Windows</label>
-                <select id="portal-monitor"></select>
-                <label for="portal-side" data-i18n="portalSide">Borda de saída</label>
-                <select id="portal-side">
-                  <option value="Left" data-i18n="portalLeft">Esquerda</option>
-                  <option value="Right" data-i18n="portalRight">Direita</option>
-                  <option value="Top" data-i18n="portalTop">Superior</option>
-                  <option value="Bottom" data-i18n="portalBottom">Inferior</option>
+                <label for="portal-remote-size" data-i18n="portalRemoteSize">Resolução do outro computador</label>
+                <select id="portal-remote-size">
+                  <option value="1280x720">1280×720</option>
+                  <option value="1366x768">1366×768</option>
+                  <option value="1600x900">1600×900</option>
+                  <option value="1920x1080">1920×1080</option>
+                  <option value="1920x1200">1920×1200</option>
+                  <option value="2560x1080">2560×1080</option>
+                  <option value="2560x1440">2560×1440</option>
+                  <option value="2560x1600">2560×1600</option>
+                  <option value="3440x1440">3440×1440</option>
+                  <option value="3840x2160">3840×2160</option>
                 </select>
+                <span class="portal-fields-label" data-i18n="portalSide">Borda de saída</span>
+                <strong id="portal-placement">—</strong>
                 <p id="portal-status" class="field-help" role="status" aria-live="polite"></p>
               </div>
-              <div class="portal-preview" aria-hidden="true">
-                <div class="portal-screen"><span data-i18n="portalWindows">Windows</span><span id="portal-marker" class="portal-marker"></span></div>
-                <div class="portal-screen portal-linux" data-i18n="portalLinux">Linux</div>
+              <div id="portal-layout" class="portal-layout">
+                <span id="portal-marker" class="portal-marker" aria-hidden="true"></span>
+                <div id="portal-remote" class="portal-display portal-remote" tabindex="0" role="button" data-i18n="portalRemote" data-i18n-aria-label="portalDrag" aria-label="Arraste para posicionar a tela do outro computador">Outro PC</div>
               </div>
             </div>
             <p class="field-help" data-i18n="portalEscape">O atalho configurado devolve o controle local. A desconexão também libera o teclado e o mouse.</p>
