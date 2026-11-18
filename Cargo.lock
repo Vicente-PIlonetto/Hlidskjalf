@@ -1111,6 +1111,159 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "hlidskjalf-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64 0.22.1",
+ "hlidskjalf-input",
+ "hlidskjalf-input-linux",
+ "hlidskjalf-net",
+ "hlidskjalf-proto",
+ "hlidskjalf-vylink",
+ "keyring",
+ "rpassword",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "hlidskjalf-core"
+version = "0.1.0"
+dependencies = [
+ "hlidskjalf-input",
+ "hlidskjalf-proto",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "hlidskjalf-daemon"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64 0.22.1",
+ "getrandom 0.4.3",
+ "hlidskjalf-input",
+ "hlidskjalf-input-linux",
+ "hlidskjalf-input-windows",
+ "hlidskjalf-net",
+ "hlidskjalf-proto",
+ "hlidskjalf-vylink",
+ "keyring",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "hlidskjalf-desktop"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "hlidskjalf-ui",
+]
+
+[[package]]
+name = "hlidskjalf-input"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "hlidskjalf-proto",
+ "thiserror 2.0.21",
+ "tokio",
+]
+
+[[package]]
+name = "hlidskjalf-input-linux"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "enigo",
+ "evdev",
+ "hlidskjalf-input",
+ "hlidskjalf-proto",
+ "serde",
+ "serde_json",
+ "tokio",
+ "wayland-protocols",
+]
+
+[[package]]
+name = "hlidskjalf-input-windows"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "hlidskjalf-input",
+ "hlidskjalf-proto",
+ "tokio",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "hlidskjalf-net"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "hlidskjalf-input",
+ "hlidskjalf-proto",
+ "quinn",
+ "rcgen",
+ "rustls",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "hlidskjalf-proto"
+version = "0.1.0"
+dependencies = [
+ "postcard",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "hlidskjalf-ui"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "gtk",
+ "hlidskjalf-input",
+ "hlidskjalf-input-linux",
+ "hlidskjalf-net",
+ "png",
+ "serde_json",
+ "sha2",
+ "tao",
+ "windows-sys 0.61.2",
+ "wry",
+]
+
+[[package]]
+name = "hlidskjalf-vylink"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "hlidskjalf-input",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "html5ever"
 version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3222,159 +3375,6 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
-
-[[package]]
-name = "hlidskjalf-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "base64 0.22.1",
- "keyring",
- "rpassword",
- "serde",
- "serde_json",
- "sha2",
- "tokio",
- "tracing",
- "hlidskjalf-input",
- "hlidskjalf-input-linux",
- "hlidskjalf-net",
- "hlidskjalf-proto",
- "hlidskjalf-vylink",
-]
-
-[[package]]
-name = "hlidskjalf-core"
-version = "0.1.0"
-dependencies = [
- "thiserror 2.0.21",
- "hlidskjalf-input",
- "hlidskjalf-proto",
-]
-
-[[package]]
-name = "hlidskjalf-daemon"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "base64 0.22.1",
- "getrandom 0.4.3",
- "keyring",
- "serde",
- "serde_json",
- "sha2",
- "tokio",
- "tracing",
- "url",
- "hlidskjalf-input",
- "hlidskjalf-input-linux",
- "hlidskjalf-input-windows",
- "hlidskjalf-net",
- "hlidskjalf-proto",
- "hlidskjalf-vylink",
-]
-
-[[package]]
-name = "hlidskjalf-desktop"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "hlidskjalf-ui",
-]
-
-[[package]]
-name = "hlidskjalf-input"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "thiserror 2.0.21",
- "tokio",
- "hlidskjalf-proto",
-]
-
-[[package]]
-name = "hlidskjalf-input-linux"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "enigo",
- "evdev",
- "serde",
- "serde_json",
- "tokio",
- "hlidskjalf-input",
- "hlidskjalf-proto",
- "wayland-protocols",
-]
-
-[[package]]
-name = "hlidskjalf-input-windows"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "tokio",
- "hlidskjalf-input",
- "hlidskjalf-proto",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "hlidskjalf-net"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "quinn",
- "rcgen",
- "rustls",
- "tokio",
- "tracing",
- "hlidskjalf-input",
- "hlidskjalf-proto",
-]
-
-[[package]]
-name = "hlidskjalf-proto"
-version = "0.1.0"
-dependencies = [
- "postcard",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "hlidskjalf-ui"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "gtk",
- "png",
- "serde_json",
- "sha2",
- "tao",
- "hlidskjalf-input",
- "hlidskjalf-input-linux",
- "hlidskjalf-net",
- "windows-sys 0.61.2",
- "wry",
-]
-
-[[package]]
-name = "hlidskjalf-vylink"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "reqwest",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "hlidskjalf-input",
-]
 
 [[package]]
 name = "walkdir"
