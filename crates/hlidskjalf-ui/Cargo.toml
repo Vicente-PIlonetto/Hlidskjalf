@@ -13,7 +13,7 @@ anyhow.workspace = true
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = "0.18"
 serde_json.workspace = true
-sha2 = "0.10"
+sha2 = "0.11"
 hlidskjalf-input-linux = { path = "../hlidskjalf-input-linux" }
 hlidskjalf-net = { path = "../hlidskjalf-net" }
 
@@ -21,7 +21,7 @@ hlidskjalf-net = { path = "../hlidskjalf-net" }
 base64 = "0.22"
 png = "0.18"
 serde_json.workspace = true
-sha2 = "0.10"
+sha2 = "0.11"
 tao = "0.37"
 hlidskjalf-input = { path = "../hlidskjalf-input" }
 windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Globalization", "Win32_Graphics_Gdi", "Win32_System_DataExchange", "Win32_System_LibraryLoader", "Win32_System_Memory", "Win32_System_Threading", "Win32_UI_Controls_Dialogs", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse"] }
