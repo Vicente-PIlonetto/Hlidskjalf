@@ -15,6 +15,7 @@ O Vortal liga os dois computadores pela rede. Arraste o cursor pela borda escolh
 - **Área de transferência:** compartilhe texto e copie imagens do Windows para o Linux.
 - **Áudio:** ouça no Windows o som reproduzido no Linux.
 - **Segundo plano:** feche a janela e continue conectado pelo ícone da bandeja. O Vortal também pode iniciar com o Windows.
+- **Windows como receptor:** outro Windows pode controlar este PC pelo ID; ative em **Configurações**.
 - **Idioma automático:** a versão Windows usa português do Brasil quando esse é o idioma do sistema; nos demais casos, usa inglês.
 
 ### Portais

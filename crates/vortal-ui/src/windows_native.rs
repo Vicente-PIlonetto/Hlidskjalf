@@ -60,6 +60,8 @@ const BRIDGE_JS: &str = r#"
     returnFromEdge: () => send('returnFromEdge'),
     onEdgeState: (callback) => on('edgeState', callback),
     onInputError: (callback) => on('inputError', callback),
+    receiver: (enabled = null) => call('receiver', enabled),
+    receiverDecide: (nonce, action) => call('receiverDecide', { nonce, action }),
   };
 })();
 "#;

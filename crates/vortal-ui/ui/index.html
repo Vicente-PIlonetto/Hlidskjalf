@@ -149,6 +149,19 @@
                 <div class="remote-actions"><button id="allow-pairing" class="button button-light" type="button" data-i18n="allowPairing">Permitir</button><button id="deny-pairing" class="button" type="button" data-i18n="denyPairing">Recusar</button></div>
               </div>
             </div>
+            <div id="receiver-panel" class="input-settings-panel" hidden>
+              <div class="input-setting input-setting-inline">
+                <div><label for="receiver-enabled" data-i18n="receiverLabel">Permitir controle deste PC</label><p class="field-help" data-i18n="receiverHelp">Outro Windows controla este PC pelo ID.</p></div>
+                <label class="switch-control"><span class="sr-only" data-i18n="receiverLabel">Permitir controle deste PC</span><input id="receiver-enabled" type="checkbox" role="switch"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></label>
+              </div>
+              <div class="input-setting"><span data-i18n="receiverId">ID deste PC</span><strong id="receiver-id">—</strong><p id="receiver-status" class="field-help" role="status" aria-live="polite"></p></div>
+              <div id="receiver-request" class="input-setting" hidden>
+                <strong data-i18n="pairingRequest">Pedido de conexão</strong>
+                <span id="receiver-peer"></span>
+                <code id="receiver-fingerprint"></code>
+                <div class="remote-actions"><button id="receiver-allow" class="button button-light" type="button" data-i18n="allowPairing">Permitir</button><button id="receiver-deny" class="button" type="button" data-i18n="denyPairing">Recusar</button></div>
+              </div>
+            </div>
             <div class="input-settings-panel">
               <div class="input-setting">
                 <div class="input-setting-heading"><label for="mouse-sensitivity" data-i18n="mouseSensitivity">Sensibilidade do mouse</label><output id="mouse-sensitivity-value" for="mouse-sensitivity">100%</output></div>

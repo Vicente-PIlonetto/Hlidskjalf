@@ -37,6 +37,7 @@ use windows_sys::Win32::{
 };
 
 use crate::windows_native::{UiEvent, UiProxy};
+use crate::windows_receiver::Receiver;
 
 #[derive(Clone)]
 pub(super) struct DisplayInfo {
@@ -77,6 +78,7 @@ pub(super) struct Backend {
     last_clipboard: Arc<Mutex<String>>,
     image_generation: Arc<AtomicU64>,
     image_transfer: Arc<Mutex<()>>,
+    receiver: Arc<Receiver>,
 }
 
 impl Backend {
@@ -88,6 +90,7 @@ impl Backend {
             .find(|path| path.join("identity").exists() || path.join("peer.der").exists())
             .unwrap_or_else(|| app_data.join("Vortal"));
         fs::create_dir_all(&data_dir)?;
+        let receiver = Receiver::new(&data_dir);
         let backend = Self {
             proxy,
             state: Arc::new(Mutex::new(State {
@@ -108,6 +111,7 @@ impl Backend {
             last_clipboard: Arc::new(Mutex::new(String::new())),
             image_generation: Arc::new(AtomicU64::new(0)),
             image_transfer: Arc::new(Mutex::new(())),
+            receiver,
         };
         let polling = backend.clone();
         thread::spawn(move || polling.edge_poll_loop());
@@ -175,6 +179,8 @@ impl Backend {
             "startup" => self.startup(args),
             "clipboard" => self.set_clipboard(args),
             "audio" => self.set_audio(args),
+            "receiver" => self.receiver.configure(args),
+            "receiverDecide" => self.receiver.decide(args),
             _ => bail!("Unknown desktop command"),
         }
     }
@@ -536,6 +542,7 @@ impl Backend {
 
     pub fn shutdown(&self) {
         self.disconnect();
+        self.receiver.shutdown();
     }
 
     fn notify(&self, name: &'static str, value: Value) {
@@ -609,6 +616,7 @@ impl Backend {
             .lock()
             .map_err(|_| anyhow::anyhow!("state unavailable"))?
             .clipboard = enabled;
+        self.receiver.set_clipboard(enabled);
         Ok(Value::Bool(enabled))
     }
 
@@ -812,7 +820,7 @@ impl Backend {
                     )
                 })
                 .unwrap_or((false, None));
-            if !connected || config.is_none() {
+            if !connected || config.is_none() || self.receiver.is_controlled() {
                 previous = None;
                 thread::sleep(Duration::from_millis(100));
                 continue;

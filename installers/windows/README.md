@@ -39,6 +39,22 @@ Fechar a janela mantém o Vortal em segundo plano. Use o ícone na bandeja do Wi
 
 O portal automático está disponível no app Windows x64. A captura nativa encaminha a tecla Windows como Super e não abre uma janela sobre programas em tela cheia. O compartilhamento da área de transferência aceita texto UTF-8 até 16 KiB; arquivos e imagens ainda não são transferidos. O áudio do Linux é enviado em PCM estéreo a 48 kHz por um fluxo QUIC separado do controle de entrada.
 
+## Controlar este Windows (receptor)
+
+Um Windows também pode ser controlado por outro Windows com o Vortal.
+
+1. No Windows que será controlado, abra **Configurações** e ative **Permitir controle deste PC**. Anote o **ID deste PC**.
+2. No Windows que controla, digite esse ID e clique em **Parear**. Confirme o pedido no Windows controlado com **Permitir**.
+3. Configure o portal normalmente. Ao voltar pela borda de entrada, o controle retorna ao Windows de origem.
+
+Na primeira execução, o Windows pede para liberar o `vortald.exe` no firewall; permita em redes privadas. Sem permissão de administrador, crie as regras em um terminal elevado:
+
+```bat
+netsh advfirewall firewall add rule name="Vortal receptor" dir=in action=allow program="%LOCALAPPDATA%\Programs\VortalRust\vortald.exe" profile=private
+```
+
+O receptor Windows aceita mouse, teclado (incluindo acentos por teclas mortas) e texto da área de transferência. Áudio, imagens e arquivos ainda não são enviados para um receptor Windows. Janelas executadas como administrador não recebem entrada de um app sem elevação, e a tela de bloqueio ou o UAC devolvem o controle ao computador de origem.
+
 ## Gerar o app Windows
 
 No Windows x64, instale Rust 1.85+, Visual Studio C++ Build Tools e NSIS; depois execute `scripts\build-windows.bat`. O instalador Rust fica em `dist\windows-native\Vortal-Setup-Rust-x64.exe`. A janela usa WebView2 e requer o WebView2 Runtime. O Vortal inicia na bandeja ao entrar no Windows; essa opção pode ser desativada em Configurações. A instalação fica em `VortalRust` para preservar a versão Electron anterior.

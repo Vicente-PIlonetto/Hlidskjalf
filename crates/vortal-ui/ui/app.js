@@ -527,6 +527,7 @@ if (window.vortalDesktop) {
     document.querySelector("#input-settings-status").textContent = locale[code] || locale.captureFailed;
     showDesktopPage("settings");
   });
+  setupReceiver();
   document.querySelector("#remote-control").hidden = false;
   document.querySelector("#settings").hidden = true;
   document.querySelector(".mode-row").hidden = true;
@@ -683,4 +684,54 @@ if (window.vortalDesktop) {
     if (code && heldKeys.delete(code)) window.vortalDesktop.input({ type: "key", code, pressed: false });
     event.preventDefault();
   });
+}
+
+function setupReceiver() {
+  document.querySelector("#receiver-panel").hidden = false;
+  const toggle = document.querySelector("#receiver-enabled");
+  const status = document.querySelector("#receiver-status");
+  const request = document.querySelector("#receiver-request");
+  let pendingNonce = null;
+  const render = (state) => {
+    toggle.checked = state.enabled;
+    document.querySelector("#receiver-id").textContent = state.id ? `${state.id.slice(0, 2)} ${state.id.slice(2)}` : "—";
+    let key = "receiverOff";
+    if (state.enabled) {
+      if (state.error) key = "receiverStopped";
+      else if (!state.running || !state.id) key = "receiverStarting";
+      else if (state.controlled) key = "receiverControlled";
+      else key = state.paired ? "receiverReady" : "receiverWaiting";
+    }
+    status.textContent = locale[key] || "";
+    pendingNonce = state.enabled && typeof state.pending?.nonce === "string" ? state.pending.nonce : null;
+    request.hidden = !pendingNonce;
+    if (pendingNonce) {
+      document.querySelector("#receiver-peer").textContent = state.pending.name || "";
+      document.querySelector("#receiver-fingerprint").textContent = state.pending.fingerprint || "";
+    }
+  };
+  const refresh = () => window.vortalDesktop.receiver().then(render).catch(() => {});
+  toggle.addEventListener("change", async (event) => {
+    try {
+      render(await window.vortalDesktop.receiver(event.target.checked));
+    } catch (error) {
+      event.target.checked = !event.target.checked;
+      showToast(desktopError(error) || locale.inputSettingsFailed);
+    }
+  });
+  for (const [id, action] of [["#receiver-allow", "allow"], ["#receiver-deny", "deny"]]) {
+    document.querySelector(id).addEventListener("click", async () => {
+      if (!pendingNonce) return;
+      try {
+        await window.vortalDesktop.receiverDecide(pendingNonce, action);
+        request.hidden = true;
+        pendingNonce = null;
+        showToast(locale[action === "allow" ? "pairingAllowed" : "pairingDeniedLocal"]);
+      } catch (error) {
+        showToast(desktopError(error) || error.message);
+      }
+    });
+  }
+  void refresh();
+  window.setInterval(() => { void refresh(); }, 1000);
 }

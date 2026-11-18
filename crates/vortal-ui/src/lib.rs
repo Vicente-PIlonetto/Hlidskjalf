@@ -7,6 +7,8 @@ mod windows_clipboard;
 #[cfg(target_os = "windows")]
 mod windows_native;
 #[cfg(target_os = "windows")]
+mod windows_receiver;
+#[cfg(target_os = "windows")]
 mod windows_tray;
 
 #[cfg(target_os = "windows")]
