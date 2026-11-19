@@ -6,6 +6,8 @@ pub mod keymap;
 #[cfg(windows)]
 mod clipboard;
 #[cfg(windows)]
+pub mod dpi;
+#[cfg(windows)]
 mod injector;
 
 #[cfg(windows)]

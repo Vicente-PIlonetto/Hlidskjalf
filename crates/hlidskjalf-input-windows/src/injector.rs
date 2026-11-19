@@ -21,8 +21,8 @@ use windows_sys::Win32::{
             MOUSEEVENTF_WHEEL, MOUSEEVENTF_XDOWN, MOUSEEVENTF_XUP, MOUSEINPUT,
         },
         WindowsAndMessaging::{
-            GetCursorPos, GetSystemMetrics, SetProcessDPIAware, SM_CXVIRTUALSCREEN,
-            SM_CYVIRTUALSCREEN, SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN,
+            GetCursorPos, GetSystemMetrics, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN,
+            SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN,
         },
     },
 };
@@ -49,8 +49,7 @@ pub struct WindowsInjector {
 
 impl WindowsInjector {
     pub fn new() -> Result<Self, InputError> {
-        // SAFETY: Marks this process DPI aware so cursor and monitor coordinates are physical pixels.
-        unsafe { SetProcessDPIAware() };
+        crate::dpi::become_per_monitor_aware();
         if monitors().is_empty() {
             return Err(InputError::Backend(
                 "no Windows display is available".into(),

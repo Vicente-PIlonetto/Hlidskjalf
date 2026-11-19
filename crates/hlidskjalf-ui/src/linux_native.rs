@@ -252,49 +252,150 @@ fn decide_pairing(nonce: &str, action: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Eyebrow and title that open a page or tile, led by a Younger Futhark rune.
+fn heading(target: &gtk::Box, rune: &str, eyebrow: &str, title: &str, title_class: &str) {
+    let small = gtk::Label::new(None);
+    small.set_markup(&format!(
+        "<span font_family=\"Noto Sans Runic\" size=\"large\">{rune}</span>   {}",
+        gtk::glib::markup_escape_text(&eyebrow.to_uppercase())
+    ));
+    small.style_context().add_class("eyebrow");
+    small.set_xalign(0.0);
+    let large = gtk::Label::new(Some(title));
+    large.style_context().add_class(title_class);
+    large.set_xalign(0.0);
+    large.set_line_wrap(true);
+    target.pack_start(&small, false, false, 0);
+    target.pack_start(&large, false, false, 0);
+}
+
+fn tile() -> gtk::Box {
+    let tile = gtk::Box::new(gtk::Orientation::Vertical, 10);
+    tile.style_context().add_class("card");
+    tile.set_hexpand(true);
+    tile
+}
+
+fn page() -> gtk::Box {
+    let page = gtk::Box::new(gtk::Orientation::Vertical, 10);
+    page.style_context().add_class("page");
+    page
+}
+
+fn topbar(locale: &serde_json::Value, stack: &gtk::Stack) -> gtk::Box {
+    let bar = gtk::Box::new(gtk::Orientation::Horizontal, 12);
+    bar.style_context().add_class("topbar");
+    let mark = gtk::Label::new(Some("ᚼ"));
+    mark.style_context().add_class("brand-mark");
+    mark.set_valign(gtk::Align::Center);
+    let names = gtk::Box::new(gtk::Orientation::Vertical, 2);
+    names.set_valign(gtk::Align::Center);
+    let word = gtk::Label::new(Some("HLIÐSKJÁLF"));
+    word.style_context().add_class("brand-word");
+    word.set_xalign(0.0);
+    let runes = gtk::Label::new(Some("ᚼᛚᛁᚦᛋᚴᛁᛅᛚᚠ"));
+    runes.style_context().add_class("brand-runes");
+    runes.set_xalign(0.0);
+    names.pack_start(&word, false, false, 0);
+    names.pack_start(&runes, false, false, 0);
+    bar.pack_start(&mark, false, false, 0);
+    bar.pack_start(&names, false, false, 0);
+
+    let nav = gtk::Box::new(gtk::Orientation::Horizontal, 24);
+    let mut buttons = Vec::new();
+    for (page, key) in [
+        ("home", "navHome"),
+        ("portals", "navPortals"),
+        ("settings", "navSettings"),
+    ] {
+        let button = gtk::Button::with_label(&label(locale, key));
+        button.set_relief(gtk::ReliefStyle::None);
+        button.style_context().add_class("nav-button");
+        if page == "home" {
+            button.style_context().add_class("active");
+        }
+        nav.pack_start(&button, false, false, 0);
+        buttons.push((page, button));
+    }
+    let buttons = Rc::new(buttons);
+    for (page, button) in buttons.iter() {
+        let stack = stack.clone();
+        let all = Rc::clone(&buttons);
+        let page = *page;
+        button.connect_clicked(move |_| {
+            stack.set_visible_child_name(page);
+            for (other, button) in all.iter() {
+                if *other == page {
+                    button.style_context().add_class("active");
+                } else {
+                    button.style_context().remove_class("active");
+                }
+            }
+        });
+    }
+    bar.pack_end(&nav, false, false, 0);
+    bar
+}
+
 fn build_window(application: &gtk::Application, locale: serde_json::Value) {
     let window = gtk::ApplicationWindow::new(application);
     window.set_title("Hliðskjálf");
-    window.set_default_size(640, 510);
+    window.set_default_size(1000, 680);
     window.set_resizable(true);
 
-    let content = gtk::Box::new(gtk::Orientation::Vertical, 0);
-    content.style_context().add_class("app-content");
-    let title = gtk::Label::new(Some("Hliðskjálf"));
-    title.style_context().add_class("app-title");
-    title.set_xalign(0.0);
-    content.pack_start(&title, false, false, 0);
-    let runes = gtk::Label::new(Some("ᚼᛚᛁᚦᛋᚴᛁᛅᛚᚠ"));
-    runes.style_context().add_class("app-runes");
-    runes.set_xalign(0.0);
-    content.pack_start(&runes, false, false, 0);
+    let stack = gtk::Stack::new();
+    stack.set_transition_type(gtk::StackTransitionType::Crossfade);
+    stack.set_transition_duration(220);
+
+    let shell = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    shell.style_context().add_class("app-content");
+    shell.pack_start(&topbar(&locale, &stack), false, false, 0);
     let band = gtk::Label::new(Some(RUNE_BAND));
     band.style_context().add_class("rune-band");
     band.set_xalign(0.0);
     band.set_ellipsize(gtk::pango::EllipsizeMode::End);
-    content.pack_start(&band, false, false, 0);
+    shell.pack_start(&band, false, false, 0);
 
-    let id_card = gtk::Box::new(gtk::Orientation::Vertical, 8);
-    id_card.style_context().add_class("card");
-    let id_heading = rune_heading("ᛘ", &label(&locale, "myId"));
-    id_heading.set_xalign(0.0);
+    // Home: control another computer, and this computer's ID with pairing requests.
+    let home = page();
+    let tiles = gtk::Box::new(gtk::Orientation::Horizontal, 16);
+    tiles.set_homogeneous(true);
+    let sender_tile = tile();
+    heading(
+        &sender_tile,
+        "ᚱ",
+        &label(&locale, "connectionEyebrow"),
+        &label(&locale, "connectionTitle"),
+        "tile-title",
+    );
+    let id_tile = tile();
+    heading(
+        &id_tile,
+        "ᛘ",
+        &label(&locale, "thisComputerEyebrow"),
+        &label(&locale, "myId"),
+        "tile-title",
+    );
+    tiles.pack_start(&sender_tile, true, true, 0);
+    tiles.pack_start(&id_tile, true, true, 0);
+    home.pack_start(&tiles, false, false, 0);
+
     let id_label = gtk::Label::new(Some("—"));
     id_label.style_context().add_class("device-id");
     id_label.set_xalign(0.0);
     id_label.set_selectable(true);
     let create_button = gtk::Button::with_label(&label(&locale, "createIdentity"));
-    id_card.pack_start(&id_heading, false, false, 0);
-    id_card.pack_start(&id_label, false, false, 0);
-    id_card.pack_start(&create_button, false, false, 0);
-    content.pack_start(&id_card, false, false, 0);
+    id_tile.pack_start(&id_label, false, false, 0);
+    id_tile.pack_start(&create_button, false, false, 0);
 
     let request_box = gtk::Box::new(gtk::Orientation::Vertical, 8);
-    request_box.style_context().add_class("card");
+    request_box.style_context().add_class("request");
     let request_heading = rune_heading("ᚾ", &label(&locale, "pairingRequest"));
     request_heading.set_xalign(0.0);
     let peer_label = gtk::Label::new(None);
     peer_label.set_xalign(0.0);
     let fingerprint_label = gtk::Label::new(None);
+    fingerprint_label.style_context().add_class("fingerprint");
     fingerprint_label.set_xalign(0.0);
     fingerprint_label.set_selectable(true);
     fingerprint_label.set_ellipsize(gtk::pango::EllipsizeMode::Middle);
@@ -308,19 +409,43 @@ fn build_window(application: &gtk::Application, locale: serde_json::Value) {
     request_box.pack_start(&peer_label, false, false, 0);
     request_box.pack_start(&fingerprint_label, false, false, 0);
     request_box.pack_start(&actions, false, false, 0);
-    content.pack_start(&request_box, false, false, 0);
-
-    let settings = gtk::Box::new(gtk::Orientation::Vertical, 0);
-    settings.style_context().add_class("card");
-    let settings_heading = rune_heading("ᛏ", &label(&locale, "preferencesTitle"));
-    settings_heading.set_xalign(0.0);
-    settings.pack_start(&settings_heading, false, false, 0);
+    id_tile.pack_start(&request_box, false, false, 0);
     let status = gtk::Label::new(None);
     status.style_context().add_class("status");
     status.set_xalign(0.0);
+    status.set_line_wrap(true);
+    id_tile.pack_start(&status, false, false, 0);
     if let Err(error) = ensure_linux_identity() {
         status.set_text(&error.to_string());
     }
+
+    // Portals: where the other computer sits.
+    let portals = page();
+    heading(
+        &portals,
+        "ᚱ",
+        &label(&locale, "portalEyebrow"),
+        &label(&locale, "portalTitle"),
+        "page-title",
+    );
+    crate::linux_sender::build(&sender_tile, &portals, &locale);
+
+    // Settings: receiver preferences.
+    let settings_page = page();
+    heading(
+        &settings_page,
+        "ᛏ",
+        &label(&locale, "preferencesEyebrow"),
+        &label(&locale, "preferencesTitle"),
+        "page-title",
+    );
+    let settings = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    settings.style_context().add_class("card");
+    settings.set_size_request(640, -1);
+    settings.set_halign(gtk::Align::Start);
+    let settings_status = gtk::Label::new(None);
+    settings_status.style_context().add_class("status");
+    settings_status.set_xalign(0.0);
     let startup = Command::new("systemctl")
         .args(["--user", "is-enabled", "hlidskjalf-input.service"])
         .output()
@@ -331,7 +456,7 @@ fn build_window(application: &gtk::Application, locale: serde_json::Value) {
         "startupLabel",
         "startup-enabled",
         startup,
-        &status,
+        &settings_status,
     );
     build_setting(
         &settings,
@@ -339,7 +464,7 @@ fn build_window(application: &gtk::Application, locale: serde_json::Value) {
         "clipboardLabel",
         "clipboard-enabled",
         setting_enabled("clipboard-enabled"),
-        &status,
+        &settings_status,
     );
     build_setting(
         &settings,
@@ -347,16 +472,23 @@ fn build_window(application: &gtk::Application, locale: serde_json::Value) {
         "audioLabel",
         "audio-enabled",
         setting_enabled("audio-enabled"),
-        &status,
+        &settings_status,
     );
-    settings.pack_start(&status, false, false, 0);
-    content.pack_start(&settings, false, false, 0);
-    crate::linux_sender::build(&content, &locale);
+    settings.pack_start(&settings_status, false, false, 0);
+    settings_page.pack_start(&settings, false, false, 0);
 
-    let scroller = gtk::ScrolledWindow::new(gtk::Adjustment::NONE, gtk::Adjustment::NONE);
-    scroller.set_policy(gtk::PolicyType::Never, gtk::PolicyType::Automatic);
-    scroller.add(&content);
-    window.add(&scroller);
+    for (name, content) in [
+        ("home", &home),
+        ("portals", &portals),
+        ("settings", &settings_page),
+    ] {
+        let scroller = gtk::ScrolledWindow::new(gtk::Adjustment::NONE, gtk::Adjustment::NONE);
+        scroller.set_policy(gtk::PolicyType::Never, gtk::PolicyType::Automatic);
+        scroller.add(content);
+        stack.add_named(&scroller, name);
+    }
+    shell.pack_start(&stack, true, true, 0);
+    window.add(&shell);
     window.show_all();
 
     let nonce = Rc::new(RefCell::new(None::<String>));

@@ -32,6 +32,23 @@ const ALPN: &[u8] = b"hlidskjalf/1";
 const HEARTBEAT_INTERVAL: Duration = Duration::from_millis(75);
 const SESSION_TIMEOUT: Duration = Duration::from_millis(300);
 const MAX_CLIPBOARD_BYTES: usize = 16 * 1024;
+const PEER_NAME: &str = "hlidskjalf-peer";
+/// Certificates created before the rename to Hliðskjálf carry this name; pairings keep them.
+const LEGACY_PEER_NAME: &str = "vortal-peer";
+
+/// The TLS server name written in a pinned peer certificate, so migrated identities still verify.
+fn peer_server_name(certificate: &[u8]) -> &'static str {
+    let contains = |name: &str| {
+        certificate
+            .windows(name.len())
+            .any(|window| window == name.as_bytes())
+    };
+    if !contains(PEER_NAME) && contains(LEGACY_PEER_NAME) {
+        LEGACY_PEER_NAME
+    } else {
+        PEER_NAME
+    }
+}
 
 /// Create a self-signed Hliðskjálf identity. Share `cert.der` with the peer out of band.
 pub fn generate_identity(directory: &Path, device_id: &str) -> Result<()> {
@@ -52,7 +69,7 @@ pub fn generate_identity(directory: &Path, device_id: &str) -> Result<()> {
             directory.display()
         );
     }
-    let certified = rcgen::generate_simple_self_signed(vec!["hlidskjalf-peer".into()])
+    let certified = rcgen::generate_simple_self_signed(vec![PEER_NAME.into()])
         .context("could not generate local certificate")?;
     write_private_file(&key_path, &certified.key_pair.serialize_der())?;
     if let Err(error) = std::fs::write(&cert_path, certified.cert.der()) {
@@ -479,6 +496,7 @@ async fn connect_handshake(
 ) -> Result<(quinn::Connection, Endpoint)> {
     let (certificate, key, device_id) = load_identity(identity)?;
     let peer_certificate = read_certificate(peer_certificate)?;
+    let server_name = peer_server_name(&peer_certificate);
     let mut roots = RootCertStore::empty();
     roots
         .add(peer_certificate)
@@ -509,7 +527,7 @@ async fn connect_handshake(
     .context("could not create QUIC endpoint")?;
     endpoint.set_default_client_config(quinn::ClientConfig::new(Arc::new(crypto)));
     let connection = endpoint
-        .connect(peer, "hlidskjalf-peer")
+        .connect(peer, server_name)
         .context("invalid peer address")?
         .await
         .with_context(|| format!("could not establish authenticated QUIC connection to {peer}"))?;
