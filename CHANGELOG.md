@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.1] - 2026-11-19
+
+### Fixed
+
+- Windows monitors are read live in physical pixels and identified by their Windows number, so the portal editor matches Settings › Display.
+- The cursor moves freely between local Windows monitors; only an edge with no monitor beyond it opens the portal.
+- Cursor capture and the Windows receiver use per-monitor DPI awareness, so scaled monitors no longer shift edges.
+- Releases include the Windows installer (`.exe`); the 0.1.0 tag was cut before the release workflow existed.
+
 ## [0.1.0] - 2026-11-18
 
 First release as **Hliðskjálf** (ᚼᛚᛁᚦᛋᚴᛁᛅᛚᚠ), formerly Vortal.

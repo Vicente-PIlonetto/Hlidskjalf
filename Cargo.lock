@@ -1112,7 +1112,7 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "hlidskjalf-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1133,7 +1133,7 @@ dependencies = [
 
 [[package]]
 name = "hlidskjalf-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hlidskjalf-input",
  "hlidskjalf-proto",
@@ -1142,7 +1142,7 @@ dependencies = [
 
 [[package]]
 name = "hlidskjalf-daemon"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1165,7 +1165,7 @@ dependencies = [
 
 [[package]]
 name = "hlidskjalf-desktop"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "hlidskjalf-ui",
@@ -1173,7 +1173,7 @@ dependencies = [
 
 [[package]]
 name = "hlidskjalf-input"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "hlidskjalf-proto",
@@ -1183,7 +1183,7 @@ dependencies = [
 
 [[package]]
 name = "hlidskjalf-input-linux"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "enigo",
@@ -1198,7 +1198,7 @@ dependencies = [
 
 [[package]]
 name = "hlidskjalf-input-windows"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1210,7 +1210,7 @@ dependencies = [
 
 [[package]]
 name = "hlidskjalf-net"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "hlidskjalf-input",
@@ -1224,7 +1224,7 @@ dependencies = [
 
 [[package]]
 name = "hlidskjalf-proto"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "postcard",
  "serde",
@@ -1234,7 +1234,7 @@ dependencies = [
 
 [[package]]
 name = "hlidskjalf-ui"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -1252,7 +1252,7 @@ dependencies = [
 
 [[package]]
 name = "hlidskjalf-vylink"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "hlidskjalf-input",
