@@ -36,18 +36,9 @@ use windows_sys::Win32::{
     },
 };
 
+use crate::windows_displays::{self, DisplayInfo};
 use crate::windows_native::{UiEvent, UiProxy};
 use crate::windows_receiver::Receiver;
-
-#[derive(Clone)]
-pub(super) struct DisplayInfo {
-    pub id: String,
-    pub label: String,
-    pub x: i32,
-    pub y: i32,
-    pub width: u32,
-    pub height: u32,
-}
 
 struct Session {
     input: SyncSender<String>,
@@ -71,7 +62,7 @@ pub(super) struct Backend {
     proxy: UiProxy,
     state: Arc<Mutex<State>>,
     data_dir: PathBuf,
-    displays: Arc<Vec<DisplayInfo>>,
+    displays: Arc<Mutex<Vec<DisplayInfo>>>,
     edge_active: Arc<AtomicBool>,
     motion: Arc<Mutex<Option<Arc<Mutex<Child>>>>>,
     edge_cooldown: Arc<Mutex<Instant>>,
@@ -82,7 +73,7 @@ pub(super) struct Backend {
 }
 
 impl Backend {
-    pub fn new(proxy: UiProxy, displays: Vec<DisplayInfo>) -> anyhow::Result<Self> {
+    pub fn new(proxy: UiProxy) -> anyhow::Result<Self> {
         let app_data = std::env::var_os("APPDATA").context("APPDATA unavailable")?;
         let app_data = PathBuf::from(app_data);
         let data_dir = app_data.join("Hlidskjalf");
@@ -110,7 +101,7 @@ impl Backend {
                 scroll_remainder: (0.0, 0.0),
             })),
             data_dir,
-            displays: Arc::new(displays),
+            displays: Arc::new(Mutex::new(windows_displays::enumerate())),
             edge_active: Arc::new(AtomicBool::new(false)),
             motion: Arc::new(Mutex::new(None)),
             edge_cooldown: Arc::new(Mutex::new(Instant::now())),
@@ -175,9 +166,9 @@ impl Backend {
             "connect" => self.connect(args),
             "choosePeerCert" => self.choose_peer_cert(),
             "displays" => Ok(Value::Array(
-                self.displays
+                self.refresh_displays()
                     .iter()
-                    .map(|display| json!({"id":display.id,"label":display.label,"x":display.x,"y":display.y,"width":display.width,"height":display.height}))
+                    .map(|display| json!({"id":display.id,"number":display.number,"label":display.label,"primary":display.primary,"x":display.x,"y":display.y,"width":display.width,"height":display.height}))
                     .collect(),
             )),
             "configureEdge" => self.configure_edge(args),
@@ -551,6 +542,18 @@ impl Backend {
         self.receiver.shutdown();
     }
 
+    /// Re-reads the monitor layout, so resolution, scale or arrangement changes apply at once.
+    fn refresh_displays(&self) -> Vec<DisplayInfo> {
+        let current = windows_displays::enumerate();
+        if let Ok(mut displays) = self.displays.lock() {
+            if current.is_empty() {
+                return displays.clone();
+            }
+            displays.clone_from(&current);
+        }
+        current
+    }
+
     fn notify(&self, name: &'static str, value: Value) {
         let _ = self.proxy.send_event(UiEvent::Notify { name, value });
     }
@@ -561,11 +564,8 @@ impl Backend {
             .get("displayId")
             .and_then(Value::as_str)
             .unwrap_or("");
-        let Some(display) = self
-            .displays
-            .iter()
-            .find(|display| display.id == display_id)
-        else {
+        let displays = self.refresh_displays();
+        let Some(display) = displays.iter().find(|display| display.id == display_id) else {
             bail!("Invalid screen edge configuration");
         };
         if !["Left", "Right", "Top", "Bottom"].contains(&side) {
@@ -832,6 +832,8 @@ impl Backend {
 
     fn edge_poll_loop(&self) {
         let mut previous = None;
+        let mut displays = self.refresh_displays();
+        let mut displays_read = Instant::now();
         loop {
             let (connected, config) = self
                 .state
@@ -868,17 +870,21 @@ impl Backend {
                 continue;
             }
             let Some(config) = config else { continue };
-            let Some(display) = self.displays.iter().find(|display| {
+            if displays_read.elapsed() >= Duration::from_secs(1) {
+                displays = self.refresh_displays();
+                displays_read = Instant::now();
+            }
+            let Some(display) = displays.iter().find(|display| {
                 config.get("displayId").and_then(Value::as_str) == Some(display.id.as_str())
             }) else {
                 continue;
             };
             let side = config.get("side").and_then(Value::as_str).unwrap_or("");
-            if !inside(display, point) || !inside(display, old) {
+            if !display.contains(point) || !display.contains(old) {
                 continue;
             }
-            let right = display.x.saturating_add(display.width as i32);
-            let bottom = display.y.saturating_add(display.height as i32);
+            let right = display.right();
+            let bottom = display.bottom();
             let reached = match side {
                 "Right" => point.0 >= right - 2 && point.0 > old.0,
                 "Left" => point.0 <= display.x + 1 && point.0 < old.0,
@@ -886,6 +892,10 @@ impl Backend {
                 "Top" => point.1 <= display.y + 1 && point.1 < old.1,
                 _ => false,
             };
+            // Another local monitor continues past this spot: let the cursor move onto it.
+            if reached && leads_to_local_display(&displays, display, side, point) {
+                continue;
+            }
             let along = i64::from(if side == "Left" || side == "Right" {
                 point.1 - display.y
             } else {
@@ -1053,11 +1063,23 @@ fn edge_length(display: &DisplayInfo, side: &str) -> i64 {
     })
 }
 
-fn inside(display: &DisplayInfo, point: (i32, i32)) -> bool {
-    point.0 >= display.x
-        && point.0 < display.x.saturating_add(display.width as i32)
-        && point.1 >= display.y
-        && point.1 < display.y.saturating_add(display.height as i32)
+/// True when the pixel just past `side` at the cursor's row or column belongs to another monitor.
+fn leads_to_local_display(
+    displays: &[DisplayInfo],
+    display: &DisplayInfo,
+    side: &str,
+    point: (i32, i32),
+) -> bool {
+    let beyond = match side {
+        "Right" => (display.right(), point.1),
+        "Left" => (display.x - 1, point.1),
+        "Bottom" => (point.0, display.bottom()),
+        "Top" => (point.0, display.y - 1),
+        _ => return false,
+    };
+    displays
+        .iter()
+        .any(|other| other.id != display.id && other.contains(beyond))
 }
 
 fn cursor_position() -> Option<(i32, i32)> {

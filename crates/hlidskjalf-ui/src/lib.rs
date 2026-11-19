@@ -5,6 +5,8 @@ mod windows_backend;
 #[cfg(target_os = "windows")]
 mod windows_clipboard;
 #[cfg(target_os = "windows")]
+mod windows_displays;
+#[cfg(target_os = "windows")]
 mod windows_native;
 #[cfg(target_os = "windows")]
 mod windows_receiver;

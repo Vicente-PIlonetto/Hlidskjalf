@@ -10,7 +10,7 @@ use tao::{
 };
 use wry::{dpi::PhysicalPosition, http::Response, Rect, WebViewBuilder};
 
-use crate::windows_backend::{Backend, DisplayInfo};
+use crate::windows_backend::Backend;
 use crate::windows_tray::TrayHandle;
 use crate::{APP_CSS, APP_JS, EN_JSON, ICON_PNG, INDEX_HTML, PT_BR_JSON, TOKENS_CSS, UI_ICON};
 
@@ -108,25 +108,7 @@ pub fn run_desktop() -> anyhow::Result<()> {
         .with_min_inner_size(LogicalSize::new(700.0, 500.0))
         .with_window_icon(Some(icon))
         .build(&event_loop)?;
-    let displays = window
-        .available_monitors()
-        .enumerate()
-        .map(|(index, monitor)| {
-            let position = monitor.position();
-            let size = monitor.size();
-            DisplayInfo {
-                id: index.to_string(),
-                label: monitor
-                    .name()
-                    .unwrap_or_else(|| format!("Monitor {}", index + 1)),
-                x: position.x,
-                y: position.y,
-                width: size.width,
-                height: size.height,
-            }
-        })
-        .collect();
-    let backend = Backend::new(event_loop.create_proxy(), displays)?;
+    let backend = Backend::new(event_loop.create_proxy())?;
     let tray = TrayHandle::start(event_loop.create_proxy()).ok();
     let handler = backend.clone();
     let webview = WebViewBuilder::new()

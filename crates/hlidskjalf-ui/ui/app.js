@@ -455,8 +455,9 @@ async function setupPortalEditor() {
   const localElements = displays.map((display, index) => {
     const element = document.createElement("div");
     element.className = "portal-display";
-    element.title = display.label;
-    element.append(String(index + 1));
+    element.title = display.primary ? `${display.label} · ${locale.portalPrimary || "Primary"}` : display.label;
+    element.classList.toggle("is-primary", Boolean(display.primary));
+    element.append(String(display.number || index + 1));
     const detail = document.createElement("small");
     detail.textContent = `${display.width}×${display.height}`;
     element.append(detail);
@@ -502,9 +503,9 @@ async function setupPortalEditor() {
         ? { x: side === "Right" ? display.x + display.width - thickness / 2 : display.x - thickness / 2, y: display.y + from, width: thickness, height: to - from }
         : { x: display.x + from, y: side === "Bottom" ? display.y + display.height - thickness / 2 : display.y - thickness / 2, width: to - from, height: thickness });
     }
-    const index = placement ? displays.indexOf(placement.display) : -1;
+    const number = placement ? placement.display.number || displays.indexOf(placement.display) + 1 : 0;
     document.querySelector("#portal-placement").textContent = placement
-      ? `${index + 1} · ${placement.display.label} · ${locale[`portal${placement.side}`] || placement.side}`
+      ? `${number} · ${placement.display.label} · ${locale[`portal${placement.side}`] || placement.side}`
       : "—";
   };
   const save = async () => {

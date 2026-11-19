@@ -25,12 +25,11 @@ mod windows {
         },
         UI::WindowsAndMessaging::{
             CallNextHookEx, GetCursorPos, GetForegroundWindow, GetWindowThreadProcessId,
-            PeekMessageW, SetCursorPos, SetProcessDPIAware, SetWindowsHookExW, ShowCursor,
-            UnhookWindowsHookEx, HHOOK, KBDLLHOOKSTRUCT, LLKHF_EXTENDED, LLMHF_INJECTED, MSG,
-            MSLLHOOKSTRUCT, PM_REMOVE, WH_KEYBOARD_LL, WH_MOUSE_LL, WM_KEYDOWN, WM_KEYUP,
-            WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEHWHEEL,
-            WM_MOUSEMOVE, WM_MOUSEWHEEL, WM_RBUTTONDOWN, WM_RBUTTONUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
-            WM_XBUTTONDOWN, WM_XBUTTONUP,
+            PeekMessageW, SetCursorPos, SetWindowsHookExW, ShowCursor, UnhookWindowsHookEx, HHOOK,
+            KBDLLHOOKSTRUCT, LLKHF_EXTENDED, LLMHF_INJECTED, MSG, MSLLHOOKSTRUCT, PM_REMOVE,
+            WH_KEYBOARD_LL, WH_MOUSE_LL, WM_KEYDOWN, WM_KEYUP, WM_LBUTTONDOWN, WM_LBUTTONUP,
+            WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEHWHEEL, WM_MOUSEMOVE, WM_MOUSEWHEEL,
+            WM_RBUTTONDOWN, WM_RBUTTONUP, WM_SYSKEYDOWN, WM_SYSKEYUP, WM_XBUTTONDOWN, WM_XBUTTONUP,
         },
     };
 
@@ -439,7 +438,7 @@ mod windows {
             .and_then(parse_return_chord)?;
         let _ = RETURN_CHORD.set(return_chord);
         let _ = LAYOUT.set(layout);
-        let _ = unsafe { SetProcessDPIAware() };
+        hlidskjalf_input_windows::dpi::become_per_monitor_aware();
         let initial = cursor()?;
         let monitor = unsafe { MonitorFromPoint(initial, MONITOR_DEFAULTTONEAREST) };
         if monitor.is_null() {
