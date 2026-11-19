@@ -1,5 +1,6 @@
 //! Reads the Windows monitor layout in physical pixels, the same space as `GetCursorPos`.
 
+use crate::portal_edge::ScreenRect;
 use windows_sys::Win32::{
     Foundation::{LPARAM, RECT},
     Graphics::Gdi::{
@@ -25,16 +26,13 @@ pub(super) struct DisplayInfo {
 }
 
 impl DisplayInfo {
-    pub fn right(&self) -> i32 {
-        self.x.saturating_add(self.width as i32)
-    }
-
-    pub fn bottom(&self) -> i32 {
-        self.y.saturating_add(self.height as i32)
-    }
-
-    pub fn contains(&self, (x, y): (i32, i32)) -> bool {
-        x >= self.x && x < self.right() && y >= self.y && y < self.bottom()
+    pub fn rect(&self) -> ScreenRect {
+        ScreenRect {
+            x: self.x,
+            y: self.y,
+            width: self.width,
+            height: self.height,
+        }
     }
 }
 

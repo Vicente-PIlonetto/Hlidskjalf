@@ -59,6 +59,7 @@ const BRIDGE_JS: &str = r#"
     configureInput: (config) => call('configureInput', config),
     returnFromEdge: () => send('returnFromEdge'),
     onEdgeState: (callback) => on('edgeState', callback),
+    onDisplaysChanged: (callback) => on('displaysChanged', callback),
     onInputError: (callback) => on('inputError', callback),
     receiver: (enabled = null) => call('receiver', enabled),
     receiverDecide: (nonce, action) => call('receiverDecide', { nonce, action }),

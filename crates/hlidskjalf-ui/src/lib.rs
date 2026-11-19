@@ -1,5 +1,7 @@
 //! Embedded Hliðskjálf desktop UI assets and native window.
 
+#[cfg(any(target_os = "windows", test))]
+mod portal_edge;
 #[cfg(target_os = "windows")]
 mod windows_backend;
 #[cfg(target_os = "windows")]
@@ -8,6 +10,8 @@ mod windows_clipboard;
 mod windows_displays;
 #[cfg(target_os = "windows")]
 mod windows_native;
+#[cfg(target_os = "windows")]
+mod windows_portal_glow;
 #[cfg(target_os = "windows")]
 mod windows_receiver;
 #[cfg(target_os = "windows")]

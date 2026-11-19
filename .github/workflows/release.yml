@@ -57,7 +57,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.88.0
       - uses: Swatinem/rust-cache@v2
       - name: Install build dependencies
-        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev
+        run: sudo apt-get -o Acquire::Retries=5 update && sudo apt-get -o Acquire::Retries=5 install -y libgtk-3-dev
       - name: Build
         run: cargo build --release --locked -p hlidskjalf-cli -p hlidskjalf-daemon -p hlidskjalf-desktop
       - name: Package
@@ -101,7 +101,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" assets/* SHA256SUMS \
-            --title "Hliðskjálf ${{ needs.version.outputs.version }}" \
-            --notes-file notes.md \
-            --verify-tag
+          # A release created by hand for this tag gets the built files instead of failing.
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" assets/* SHA256SUMS --clobber
+            gh release edit "${GITHUB_REF_NAME}" \
+              --title "Hliðskjálf ${{ needs.version.outputs.version }}" \
+              --notes-file notes.md
+          else
+            gh release create "${GITHUB_REF_NAME}" assets/* SHA256SUMS \
+              --title "Hliðskjálf ${{ needs.version.outputs.version }}" \
+              --notes-file notes.md \
+              --verify-tag
+          fi

@@ -1,14 +1,14 @@
-/* Flat, grayscale, Windows Modern UI tiles; the same layout as the Windows app. */
+/* Flat, grayscale Windows Modern UI tiles with a gold accent; the same layout as the Windows app. */
 * { border-radius: 0; box-shadow: none; text-shadow: none; -gtk-icon-shadow: none; -gtk-outline-radius: 0; }
 window, box.app-content, scrolledwindow, viewport, stack { background: @gray_0; color: @gray_10; }
 
 box.topbar { min-height: 72px; padding: 0 48px; border-bottom: 1px solid @gray_3; background: @gray_0; }
-label.brand-mark { min-width: 36px; min-height: 36px; color: @gray_0; background: @gray_10; font-family: "Noto Sans Runic", "Segoe UI Historic", serif; font-size: 28px; font-weight: 700; }
+label.brand-mark { min-width: 36px; min-height: 36px; color: @gray_0; background: @accent; font-family: "Noto Sans Runic", "Segoe UI Historic", serif; font-size: 28px; font-weight: 700; }
 label.brand-word { font-size: 13px; font-weight: 700; letter-spacing: 2px; }
 label.brand-runes { color: @gray_6; font-family: "Noto Sans Runic", "Segoe UI Historic", serif; font-size: 10px; letter-spacing: 4px; animation: surface 420ms ease-out; }
 button.nav-button { min-height: 70px; padding: 0 2px; border: 0; border-bottom: 2px solid @gray_0; color: @gray_7; background: @gray_0; font-size: 13px; transition: color 160ms ease-out; }
 button.nav-button:hover { color: @gray_9; background: @gray_0; }
-button.nav-button.active { color: @gray_10; border-bottom-color: @gray_10; }
+button.nav-button.active { color: @gray_10; border-bottom-color: @accent; }
 label.rune-band { padding: 5px 48px; border-bottom: 1px solid @gray_3; color: @gray_5; background: @gray_0; font-family: "Noto Sans Runic", "Segoe UI Historic", serif; font-size: 12px; letter-spacing: 5px; animation: surface 600ms ease-out; }
 
 box.page { padding: 40px 48px 32px; }
@@ -26,17 +26,18 @@ box.setting-row { padding-top: 14px; padding-bottom: 14px; border-bottom: 1px so
 
 entry { min-height: 44px; padding: 0 14px; border: 1px solid @gray_5; color: @gray_10; background: @gray_0; caret-color: @gray_10; }
 entry.pair-id { font-family: monospace; font-size: 18px; letter-spacing: 2px; }
-entry:focus { border-color: @gray_10; }
+entry:focus { border-color: @accent; }
 button { min-height: 40px; padding: 0 16px; border: 1px solid @gray_5; color: @gray_9; background: @gray_2; font-weight: 600; }
 button:hover { background: @gray_3; }
-button.primary { color: @gray_0; background: @gray_10; border-color: @gray_10; }
-button.primary:hover { background: @gray_9; }
-button:focus-visible, switch:focus-visible, entry:focus-visible { outline: 2px solid @gray_10; outline-offset: 2px; }
+button.primary { color: @gray_0; background: @accent; border-color: @accent; }
+button.primary:hover { background: @accent_strong; border-color: @accent_strong; }
+button:focus-visible, switch:focus-visible, entry:focus-visible { outline: 2px solid @accent; outline-offset: 2px; }
 combobox button { min-height: 44px; color: @gray_9; background: @gray_2; border-color: @gray_5; font-weight: 400; }
 menu, .menu, popover { color: @gray_9; background: @gray_1; border: 1px solid @gray_3; }
 menuitem:hover { background: @gray_3; }
 switch { border: 1px solid @gray_5; background: @gray_3; }
-switch:checked { background: @gray_7; }
+switch:checked { border-color: @accent; background: @accent_dim; }
+switch:checked slider { background: @accent; }
 switch slider { min-width: 18px; min-height: 18px; border: 0; background: @gray_9; }
 scrollbar slider { background: @gray_5; }
 

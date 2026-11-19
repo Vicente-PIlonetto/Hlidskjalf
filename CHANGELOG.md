@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- A gold glow runs along the portal edge when the cursor crosses into the other computer, and spreads back out when control returns. It follows Windows' "Animation effects" setting.
+- Gold accent (Draupnir gold, against the silver grays of Valaskjálf) on the brand, active page, primary actions, switches, and the portal marker, in the Windows and Linux apps.
+- The portal editor redraws itself when Windows reports a new monitor layout.
+
+### Changed
+
+- Portal crossing is pure geometry with tests for side-by-side, stacked, mismatched, and negative-coordinate monitor layouts.
+- CI builds with the pinned Rust 1.88 and retries Ubuntu package downloads.
+
+### Fixed
+
+- The release workflow attaches its files to a release that already exists for the tag instead of failing.
+
 ## [0.1.1] - 2026-11-19
 
 ### Fixed

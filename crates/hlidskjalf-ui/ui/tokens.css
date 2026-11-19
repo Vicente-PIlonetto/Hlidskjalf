@@ -11,6 +11,11 @@
   --gray-8: #b8b8b8;
   --gray-9: #dedede;
   --gray-10: #f5f5f5;
+  /* Draupnir gold: Odin's ring and spear, against the silver of Valaskjálf (the grays). */
+  --accent: #d6a84a;
+  --accent-strong: #ecc874;
+  --accent-dim: #5c4720;
+  --on-accent: #080808;
   --space-unit: 8px;
   --font-ui: Selawik, "Segoe UI", system-ui, sans-serif;
   --font-rune: "Segoe UI Historic", "Noto Sans Runic", "Segoe UI Symbol", serif;
