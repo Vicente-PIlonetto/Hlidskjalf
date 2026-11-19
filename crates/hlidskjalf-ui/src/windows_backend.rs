@@ -36,8 +36,10 @@ use windows_sys::Win32::{
     },
 };
 
+use crate::portal_edge::{self, Portal, ScreenRect, Side};
 use crate::windows_displays::{self, DisplayInfo};
 use crate::windows_native::{UiEvent, UiProxy};
+use crate::windows_portal_glow;
 use crate::windows_receiver::Receiver;
 
 struct Session {
@@ -64,6 +66,7 @@ pub(super) struct Backend {
     data_dir: PathBuf,
     displays: Arc<Mutex<Vec<DisplayInfo>>>,
     edge_active: Arc<AtomicBool>,
+    active_portal: Arc<Mutex<Option<Portal>>>,
     motion: Arc<Mutex<Option<Arc<Mutex<Child>>>>>,
     edge_cooldown: Arc<Mutex<Instant>>,
     last_clipboard: Arc<Mutex<String>>,
@@ -103,6 +106,7 @@ impl Backend {
             data_dir,
             displays: Arc::new(Mutex::new(windows_displays::enumerate())),
             edge_active: Arc::new(AtomicBool::new(false)),
+            active_portal: Arc::new(Mutex::new(None)),
             motion: Arc::new(Mutex::new(None)),
             edge_cooldown: Arc::new(Mutex::new(Instant::now())),
             last_clipboard: Arc::new(Mutex::new(String::new())),
@@ -545,11 +549,19 @@ impl Backend {
     /// Re-reads the monitor layout, so resolution, scale or arrangement changes apply at once.
     fn refresh_displays(&self) -> Vec<DisplayInfo> {
         let current = windows_displays::enumerate();
-        if let Ok(mut displays) = self.displays.lock() {
-            if current.is_empty() {
-                return displays.clone();
+        let changed = match self.displays.lock() {
+            Ok(mut displays) => {
+                if current.is_empty() {
+                    return displays.clone();
+                }
+                let changed = *displays != current;
+                displays.clone_from(&current);
+                changed
             }
-            displays.clone_from(&current);
+            Err(_) => false,
+        };
+        if changed {
+            self.notify("displaysChanged", Value::Bool(true));
         }
         current
     }
@@ -568,10 +580,14 @@ impl Backend {
         let Some(display) = displays.iter().find(|display| display.id == display_id) else {
             bail!("Invalid screen edge configuration");
         };
-        if !["Left", "Right", "Top", "Bottom"].contains(&side) {
+        let Some(parsed_side) = Side::parse(side) else {
             bail!("Invalid screen edge configuration");
-        }
-        let edge_length = edge_length(display, side);
+        };
+        let edge_length = i64::from(if parsed_side.vertical() {
+            display.height
+        } else {
+            display.width
+        });
         let start = config.get("start").and_then(Value::as_i64).unwrap_or(0);
         let length = config
             .get("length")
@@ -850,6 +866,10 @@ impl Backend {
                 .unwrap_or((false, None));
             if !connected || config.is_none() || self.receiver.is_controlled() {
                 previous = None;
+                if displays_read.elapsed() >= Duration::from_secs(2) {
+                    displays = self.refresh_displays();
+                    displays_read = Instant::now();
+                }
                 thread::sleep(Duration::from_millis(100));
                 continue;
             }
@@ -874,51 +894,24 @@ impl Backend {
                 displays = self.refresh_displays();
                 displays_read = Instant::now();
             }
-            let Some(display) = displays.iter().find(|display| {
-                config.get("displayId").and_then(Value::as_str) == Some(display.id.as_str())
-            }) else {
+            let Some(portal) = portal_from_config(&displays, &config) else {
                 continue;
             };
-            let side = config.get("side").and_then(Value::as_str).unwrap_or("");
-            if !display.contains(point) || !display.contains(old) {
-                continue;
-            }
-            let right = display.right();
-            let bottom = display.bottom();
-            let reached = match side {
-                "Right" => point.0 >= right - 2 && point.0 > old.0,
-                "Left" => point.0 <= display.x + 1 && point.0 < old.0,
-                "Bottom" => point.1 >= bottom - 2 && point.1 > old.1,
-                "Top" => point.1 <= display.y + 1 && point.1 < old.1,
-                _ => false,
-            };
-            // Another local monitor continues past this spot: let the cursor move onto it.
-            if reached && leads_to_local_display(&displays, display, side, point) {
-                continue;
-            }
-            let along = i64::from(if side == "Left" || side == "Right" {
-                point.1 - display.y
-            } else {
-                point.0 - display.x
-            });
-            let start = config.get("start").and_then(Value::as_i64).unwrap_or(0);
-            let length = config
-                .get("length")
-                .and_then(Value::as_i64)
-                .unwrap_or_else(|| edge_length(display, side))
-                .max(1);
-            if reached && along >= start && along < start + length {
-                let fraction = (along - start) as f64 / (length - 1).max(1) as f64;
-                let position = (fraction * 65535.0).round().clamp(0.0, 65535.0) as u16;
-                self.start_edge(side, position);
+            let screens: Vec<ScreenRect> = displays.iter().map(DisplayInfo::rect).collect();
+            if let Some(position) = portal_edge::crossing(&screens, &portal, old, point) {
+                self.start_edge(portal, position);
             }
         }
     }
 
-    fn start_edge(&self, side: &str, position: u16) {
+    fn start_edge(&self, portal: Portal, position: u16) {
         if self.edge_active.swap(true, Ordering::SeqCst) {
             return;
         }
+        if let Ok(mut active) = self.active_portal.lock() {
+            *active = Some(portal);
+        }
+        let side = portal.side.as_str();
         let settings = self
             .state
             .lock()
@@ -991,7 +984,6 @@ impl Backend {
             let _ = writeln!(stdin, "stop");
         });
         let backend = self.clone();
-        let side = side.to_owned();
         thread::spawn(move || {
             let mut ready = false;
             for line in BufReader::new(stdout).lines() {
@@ -1002,6 +994,7 @@ impl Backend {
                 match line.as_str() {
                     "HLIDSKJALF_MOTION_READY" => {
                         ready = true;
+                        windows_portal_glow::show(portal, windows_portal_glow::Direction::Leave);
                         backend.send_input(
                             json!({"type":"enterScreen","edge":side,"position":position}),
                         );
@@ -1031,6 +1024,14 @@ impl Backend {
             return;
         }
         self.send_input(json!({"type":"leaveScreen"}));
+        if let Some(portal) = self
+            .active_portal
+            .lock()
+            .ok()
+            .and_then(|mut active| active.take())
+        {
+            windows_portal_glow::show(portal, windows_portal_glow::Direction::Return);
+        }
         if let Ok(mut state) = self.state.lock() {
             state.mouse_remainder = (0.0, 0.0);
             state.scroll_remainder = (0.0, 0.0);
@@ -1054,32 +1055,27 @@ impl Backend {
     }
 }
 
-/// Pixel length of a display edge; positions along it start at the display's left or top.
-fn edge_length(display: &DisplayInfo, side: &str) -> i64 {
-    i64::from(if side == "Left" || side == "Right" {
-        display.height
+/// Builds the portal from the saved edge configuration and the current monitor layout.
+fn portal_from_config(displays: &[DisplayInfo], config: &Value) -> Option<Portal> {
+    let display_id = config.get("displayId").and_then(Value::as_str)?;
+    let display = displays.iter().find(|display| display.id == display_id)?;
+    let side = Side::parse(config.get("side").and_then(Value::as_str)?)?;
+    let screen = display.rect();
+    let edge_length = i64::from(if side.vertical() {
+        screen.height
     } else {
-        display.width
+        screen.width
+    });
+    Some(Portal {
+        screen,
+        side,
+        start: config.get("start").and_then(Value::as_i64).unwrap_or(0),
+        length: config
+            .get("length")
+            .and_then(Value::as_i64)
+            .unwrap_or(edge_length)
+            .max(1),
     })
-}
-
-/// True when the pixel just past `side` at the cursor's row or column belongs to another monitor.
-fn leads_to_local_display(
-    displays: &[DisplayInfo],
-    display: &DisplayInfo,
-    side: &str,
-    point: (i32, i32),
-) -> bool {
-    let beyond = match side {
-        "Right" => (display.right(), point.1),
-        "Left" => (display.x - 1, point.1),
-        "Bottom" => (point.0, display.bottom()),
-        "Top" => (point.0, display.y - 1),
-        _ => return false,
-    };
-    displays
-        .iter()
-        .any(|other| other.id != display.id && other.contains(beyond))
 }
 
 fn cursor_position() -> Option<(i32, i32)> {

@@ -435,7 +435,7 @@ function legacyRemotePoint(displays, saved, width, height) {
 }
 
 async function setupPortalEditor() {
-  const displays = await window.hlidskjalfDesktop.displays();
+  let displays = await window.hlidskjalfDesktop.displays();
   if (!displays.length) return;
   const layout = document.querySelector("#portal-layout");
   const remoteElement = document.querySelector("#portal-remote");
@@ -452,7 +452,7 @@ async function setupPortalEditor() {
   let view = null;
   let drag = null;
 
-  const localElements = displays.map((display, index) => {
+  const createDisplayElement = (display, index) => {
     const element = document.createElement("div");
     element.className = "portal-display";
     element.title = display.primary ? `${display.label} · ${locale.portalPrimary || "Primary"}` : display.label;
@@ -463,7 +463,8 @@ async function setupPortalEditor() {
     element.append(detail);
     layout.insertBefore(element, marker);
     return element;
-  });
+  };
+  let localElements = displays.map(createDisplayElement);
 
   const computeView = () => {
     const boxes = [...displays, placement].filter(Boolean);
@@ -575,7 +576,19 @@ async function setupPortalEditor() {
     commit(placement ? { x: placement.x, y: placement.y } : legacyRemotePoint(displays, {}, width, height));
   });
   new ResizeObserver(() => render()).observe(layout);
-  portalEditor = { render };
+  /** Windows reported a new monitor layout: redraw it and keep the portal on a valid edge. */
+  const reload = async () => {
+    const next = await window.hlidskjalfDesktop.displays();
+    if (!next.length || drag) return;
+    localElements.forEach((element) => element.remove());
+    displays = next;
+    localElements = displays.map(createDisplayElement);
+    const point = placement ? { x: placement.x, y: placement.y } : legacyRemotePoint(displays, settings.portal || {}, width, height);
+    placement = snapRemote(displays, point, width, height);
+    render();
+    await save();
+  };
+  portalEditor = { render, reload };
   render();
   await save();
 }
@@ -794,8 +807,13 @@ if (window.hlidskjalfDesktop) {
     }
   });
 
+  window.hlidskjalfDesktop.onDisplaysChanged(() => {
+    if (portalEditor?.reload) void portalEditor.reload().catch(() => {});
+  });
+
   window.hlidskjalfDesktop.onEdgeState((active) => {
     edgeIsActive = active;
+    document.body.dataset.edge = active ? "active" : "idle";
     document.querySelector("#portal-status").textContent = locale[active ? "portalActive" : "portalSaved"];
     if (active) setRemoteStatus("portalActive");
     else if (remoteState === "portalActive") setRemoteStatus("remoteConnected");
