@@ -6,12 +6,12 @@ body { min-height: 100vh; margin: 0; color: var(--gray-10); background: var(--gr
 button, input, select { color: inherit; font: inherit; }
 button, a, select, input { -webkit-tap-highlight-color: transparent; }
 a { color: inherit; text-decoration: none; }
-button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--gray-10); outline-offset: 3px; }
+button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .app-shell { min-height: 100vh; }
 .topbar { height: 68px; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(20px, 5vw, 72px); border-bottom: 1px solid var(--gray-3); background: var(--gray-1); }
 .brand { display: inline-flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; letter-spacing: .16em; }
-.brand-mark { display: block; width: 34px; height: 34px; flex: 0 0 auto; background: var(--gray-10); }
+.brand-mark { display: block; width: 34px; height: 34px; flex: 0 0 auto; background: var(--accent); }
 .rune-stroke { fill: none; stroke: var(--gray-0); stroke-width: 3.2; stroke-linecap: square; transform-box: fill-box; transform-origin: center; }
 .brand-name { display: grid; gap: 2px; line-height: 1.1; }
 .brand-runes { color: var(--gray-6); font-family: var(--font-rune); font-size: 10px; font-weight: 400; letter-spacing: .32em; }
@@ -56,9 +56,9 @@ h1 { margin-bottom: 8px; font-size: clamp(28px, 3vw, 38px); line-height: 1.2; fo
 .switch-control input { position: absolute; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .switch-track { display: flex; align-items: center; width: 46px; height: 26px; padding: 3px; border: 1px solid var(--gray-5); background: var(--gray-3); }
 .switch-thumb { width: 18px; height: 18px; background: var(--gray-8); transform: translateX(0); }
-.switch-control input:checked + .switch-track { background: var(--gray-7); }
-.switch-control input:checked + .switch-track .switch-thumb { background: var(--gray-10); transform: translateX(18px); }
-.switch-control input:focus-visible + .switch-track { outline: 2px solid var(--gray-10); outline-offset: 3px; }
+.switch-control input:checked + .switch-track { border-color: var(--accent); background: var(--accent-dim); }
+.switch-control input:checked + .switch-track .switch-thumb { background: var(--accent); transform: translateX(18px); }
+.switch-control input:focus-visible + .switch-track { outline: 2px solid var(--accent); outline-offset: 3px; }
 .vylink-settings { display: grid; gap: 8px; margin-bottom: 16px; padding: 12px; background: var(--gray-2); }
 .vylink-settings label { color: var(--gray-8); font-size: 11px; font-weight: 600; }
 .vylink-settings input { width: 100%; min-width: 0; height: 38px; padding: 0 10px; border: 1px solid var(--gray-4); background: var(--gray-1); }
@@ -68,8 +68,8 @@ h1 { margin-bottom: 8px; font-size: clamp(28px, 3vw, 38px); line-height: 1.2; fo
 .input-row input { width: 100%; min-width: 0; height: 46px; padding: 0 12px; border: 1px solid var(--gray-4); background: var(--gray-2); }
 .input-row input::placeholder { color: var(--gray-6); }
 .button { min-height: 46px; padding: 0 16px; border: 1px solid var(--gray-10); font-weight: 600; cursor: pointer; }
-.button-light { color: var(--gray-0); background: var(--gray-10); }
-.button-light:hover { background: var(--gray-8); }
+.button-light { border-color: var(--accent); color: var(--on-accent); background: var(--accent); }
+.button-light:hover { border-color: var(--accent-strong); background: var(--accent-strong); }
 .field-help, .field-error { margin: 8px 0 0; color: var(--gray-7); font-size: 11px; line-height: 1.5; }
 .field-error { color: var(--gray-10); }
 .peer-list { display: grid; gap: 1px; margin-top: 12px; background: var(--gray-3); }
@@ -104,15 +104,15 @@ h1 { margin-bottom: 8px; font-size: clamp(28px, 3vw, 38px); line-height: 1.2; fo
 .portal-display small { display: block; color: var(--gray-7); font-size: 11px; font-weight: 400; }
 .portal-remote { z-index: 2; border-color: var(--gray-6); background: var(--gray-1); color: var(--gray-8); cursor: grab; }
 .portal-remote.is-dragging { z-index: 3; cursor: grabbing; opacity: .85; }
-.portal-remote:focus-visible { outline: 2px solid var(--gray-10); outline-offset: 2px; }
-.portal-marker { position: absolute; top: 0; left: 0; z-index: 1; background: var(--gray-10); }
+.portal-remote:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.portal-marker { position: absolute; top: 0; left: 0; z-index: 1; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
 .input-settings-panel { display: grid; gap: 0; width: min(660px, 100%); margin: 28px 0 18px; padding: 8px 24px; border: 1px solid var(--gray-3); background: var(--gray-1); }
 .input-setting { display: grid; gap: 10px; padding: 22px 0; border-bottom: 1px solid var(--gray-3); }
 .input-setting:last-of-type { border-bottom: 0; }
 .input-setting > label, .input-setting-heading label { color: var(--gray-9); font-size: 13px; font-weight: 600; }
 .input-setting-heading { display: flex; justify-content: space-between; gap: 16px; }
 .input-setting-heading output { color: var(--gray-8); font-variant-numeric: tabular-nums; font-size: 13px; }
-.input-setting input[type="range"] { width: 100%; accent-color: var(--gray-10); }
+.input-setting input[type="range"] { width: 100%; accent-color: var(--accent); }
 .input-setting select { min-height: 44px; padding: 0 10px; border: 1px solid var(--gray-4); background: var(--gray-2); }
 .input-setting .field-help { margin: 0; }
 .input-setting-inline { grid-template-columns: 1fr auto; align-items: center; }
@@ -124,11 +124,11 @@ h1 { margin-bottom: 8px; font-size: clamp(28px, 3vw, 38px); line-height: 1.2; fo
 .tile-about .tile-copy { margin: 18px 0 14px; }
 .text-link { display: inline-flex; gap: 8px; color: var(--gray-9); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
 footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 20px; color: var(--gray-6); font-size: 11px; }
-/* Norse motifs: runestone bands, carved corners, and Younger Futhark runes, in grayscale only. */
+/* Norse motifs: runestone bands, carved corners, and Younger Futhark runes; gold marks what is alive. */
 .rune-band { height: 26px; overflow: hidden; border-bottom: 1px solid var(--gray-3); color: var(--gray-5); background: var(--gray-0); font-family: var(--font-rune); font-size: 13px; letter-spacing: .35em; line-height: 26px; white-space: nowrap; user-select: none; }
 .rune-band-track { display: inline-flex; }
 .rune-band-track span { padding-right: .35em; }
-.eyebrow[data-rune]::before { display: inline-block; margin-right: 10px; color: var(--gray-9); content: attr(data-rune); font-family: var(--font-rune); font-size: 13px; font-weight: 400; letter-spacing: 0; transform: translateY(1px); }
+.eyebrow[data-rune]::before { display: inline-block; margin-right: 10px; color: var(--accent); content: attr(data-rune); font-family: var(--font-rune); font-size: 13px; font-weight: 400; letter-spacing: 0; transform: translateY(1px); }
 .tile, .input-settings-panel, .portal-editor { position: relative; }
 .tile { overflow: hidden; }
 .tile > :not(.tile-seal) { position: relative; }
@@ -139,8 +139,8 @@ footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 
 .tile:hover::after, .input-settings-panel:hover::after, .portal-editor:hover::after { transform: translate(3px, 3px); }
 .tile-seal { position: absolute; right: -14px; bottom: -78px; color: var(--gray-2); font-family: var(--font-rune); font-size: 280px; line-height: 1; pointer-events: none; user-select: none; }
 .status-indicator { position: relative; }
-.status-indicator::after { position: absolute; inset: -1px; border: 1px solid var(--gray-10); content: ""; opacity: 0; }
-.portal-remote::before { display: block; color: var(--gray-9); content: "ᚱ"; font-family: var(--font-rune); font-size: 22px; font-weight: 400; }
+.status-indicator::after { position: absolute; inset: -1px; border: 1px solid var(--accent); content: ""; opacity: 0; }
+.portal-remote::before { display: block; color: var(--accent); content: "ᚱ"; font-family: var(--font-rune); font-size: 22px; font-weight: 400; }
 .toast { position: fixed; right: 24px; bottom: 24px; max-width: min(360px, calc(100vw - 48px)); padding: 12px 16px; border: 1px solid var(--gray-5); color: var(--gray-10); background: var(--gray-2); }
 
 /* Windows desktop */
@@ -151,7 +151,7 @@ footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 
 .desktop-nav { gap: 24px; }
 .nav-button { position: relative; min-height: 72px; padding: 0 2px; border: 0; color: var(--gray-7); background: transparent; font-size: 13px; }
 .nav-button[aria-current="page"] { color: var(--gray-10); background: transparent; }
-.nav-button::after { position: absolute; right: 0; bottom: 15px; left: 0; height: 2px; background: var(--gray-10); content: ""; transform: scaleX(0); transform-origin: left; }
+.nav-button::after { position: absolute; right: 0; bottom: 15px; left: 0; height: 2px; background: var(--accent); content: ""; transform: scaleX(0); transform-origin: left; }
 .nav-button[aria-current="page"]::after { transform: scaleX(1); }
 .language-select { border-color: var(--gray-3); background: var(--gray-1); font-size: 12px; }
 .content { width: min(1140px, 100%); padding: 44px clamp(24px, 5vw, 72px) 32px; }
@@ -170,7 +170,7 @@ footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 
 .status-card strong { font-size: 11px; }
 .status-indicator { width: 7px; height: 7px; background: var(--gray-7); }
 .status-card[data-state="remoteConnected"] .status-indicator,
-.status-card[data-state="portalActive"] .status-indicator { background: var(--gray-10); }
+.status-card[data-state="portalActive"] .status-indicator { background: var(--accent); }
 .remote-control { gap: 14px; margin-top: 62px; padding: 0; border: 0; }
 .remote-control .peer-form { margin: 0; }
 .peer-form { width: 100%; }
@@ -180,11 +180,11 @@ footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 
 #pair-id::placeholder { color: var(--gray-6); }
 .remote-control .input-row .button { min-width: 108px; min-height: 58px; }
 .button { background: var(--gray-2); }
-.button-light { color: var(--gray-0); background: var(--gray-10); }
+.button-light { border-color: var(--accent); color: var(--on-accent); background: var(--accent); }
 .button:disabled { cursor: wait; opacity: .55; }
 #remote-status { margin: 0; color: var(--gray-8); font-size: 12px; }
 .remote-control #start-control, .remote-control #stop-control { width: 100%; min-height: 46px; font-size: 13px; }
-.remote-control #start-control { border-color: var(--gray-10); color: var(--gray-0); background: var(--gray-10); }
+.remote-control #start-control { border-color: var(--accent); color: var(--on-accent); background: var(--accent); }
 .remote-control #stop-control { border-color: var(--gray-5); background: var(--gray-2); }
 .capture-zone { min-height: 96px; }
 .empty-state { justify-items: start; padding: 30px 0 14px; text-align: left; }
@@ -266,6 +266,10 @@ footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 
   .status-card[data-state="remoteConnected"] .status-indicator::after,
   .status-card[data-state="portalActive"] .status-indicator::after { animation: bifrost 480ms ease-out 2; }
   .portal-marker { animation: kindle 1.6s ease-in-out infinite; }
+  /* The cursor crossed: the portal flares gold, like the glow drawn on the monitor edge. */
+  @keyframes cross { 0% { opacity: 1; box-shadow: 0 0 0 var(--accent); } 30% { box-shadow: 0 0 28px 6px var(--accent-strong); } 100% { opacity: 1; box-shadow: 0 0 12px var(--accent); } }
+  body[data-edge="active"] .portal-marker { animation: cross 560ms ease-out both; }
+  body[data-edge="active"] .portal-remote { border-color: var(--accent); }
   .toast:not([hidden]) { animation: surface 200ms ease-out both; }
 }
 
